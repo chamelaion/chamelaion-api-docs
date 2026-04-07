@@ -13,14 +13,23 @@ export default defineConfig({
           expandDepth: 2,
         },
       },
-      title: "chamelaion",
+      title: "Chamelaion",
+      logo: {
+        dark: "./src/assets/logo-dark.svg",
+        light: "./src/assets/logo-light.svg",
+        alt: "Chamelaion",
+      },
       customCss: ["./theme.css"],
       header: {
         layout: "stacked",
         links: [
           {
-            label: "Get started",
-            link: "/",
+            label: "Dashboard",
+            link: "https://app.chamelaion.com",
+          },
+          {
+            label: "Get API Key",
+            link: "https://app.chamelaion.com/settings/api-keys",
           },
         ],
       },
@@ -33,12 +42,20 @@ export default defineConfig({
           link: "/",
           sidebar: [
             {
-              label: "Getting started",
-              items: [""], // "" links to the index page
+              label: "Getting Started",
+              items: [
+                "",
+                "guides/quickstart",
+                "guides/authentication",
+              ],
             },
             {
-              label: "Guides",
-              autogenerate: { directory: "guides" },
+              label: "Core Guides",
+              items: [
+                "guides/generate-lipsync",
+                "guides/polling-status",
+                "guides/error-handling",
+              ],
             },
           ],
         },

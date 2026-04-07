@@ -1,78 +1,98 @@
 ---
 title: Introduction
-description: Get started building your docs site with Stainless.
+description: Chamelaion API documentation — AI-powered lip sync for video dubbing, content localization, and personalized video at scale.
 ---
 
 import { Callout, Accordion } from "@stainless-api/docs/components";
 
-Welcome to your <strong>Stainless Docs</strong> site! Your site has a few example pages pre-built, but everything in your site is configurable. In addition to auto-generated API and SDK reference pages, you can add custom prose pages like the one you're reading now.
+Chamelaion is an AI lip sync API that takes any video and audio input and generates perfectly matched lip movements. Send a video of someone speaking English and an audio track in Japanese — Chamelaion produces a new video where the speaker's lips move naturally to match the Japanese audio. This powers video dubbing, content localization, personalized video messaging, and more.
 
-## Built-in components
+## At a glance
 
-Stainless components are available as imports from `@stainless-api/docs/components`. Here are a few examples along with code samples showing how to use them:
+|                            |                                                                  |
+| :------------------------- | :--------------------------------------------------------------- |
+| **Base URL**               | `https://api.chamelaion.com/api`                                 |
+| **Authentication**         | Bearer token or `x-api-key` header                               |
+| **Input formats**          | MP4 video, WAV/MP3 audio — via URL or direct upload              |
+| **Max concurrent jobs**    | Depends on plan                                                  |
+| **Rate limit**             | 60 requests/min on generation endpoints                          |
+| **SDKs**                   | Python 3.8+ and TypeScript/Node.js 18+                           |
+| **Active speaker detection** | Automatic (can be disabled per request)                        |
 
-### Callout
+## Key capabilities
 
-```mdx
-import { Callout } from "@stainless-api/docs/components";
+- **AI Lip Sync** — State-of-the-art lip sync model that preserves the speaker's identity, head pose, and expressions while matching lip movements to new audio.
+- **URL-based generation** — Pass publicly accessible URLs for your video and audio. No file uploads required.
+- **Direct media upload** — Upload video and audio files directly via multipart form-data when URLs are not available.
+- **Active speaker detection** — Automatically detects and syncs the active speaker in multi-person scenes. Can be disabled for single-speaker videos.
+- **Request tracking** — Every generation returns a `request_id`. Poll for status, retrieve results, or filter by your own `reference_id`.
+- **Pagination** — List and paginate through your generation history with `limit` and `offset` parameters.
 
-<Callout variant="info">This is an info callout.</Callout>
-```
+## What can I build with Chamelaion?
 
-<Callout variant="note">This is a note callout.</Callout>
+Chamelaion fits anywhere you need lip movements to match new audio:
 
-### Accordion
+- **Video dubbing & localization** — Dub films, YouTube videos, and social content for global audiences with AI lip sync that looks native.
+- **E-learning & training** — Localize course videos into dozens of languages while keeping the instructor's face natural and in sync.
+- **Marketing & personalized outreach** — Generate personalized video messages at scale. One recording becomes thousands of tailored videos.
+- **Entertainment, media & gaming** — Power in-game characters, animated content, and post-production dubbing with lip sync technology that runs on API calls.
 
-```mdx
-import { Accordion } from "@stainless-api/docs/components";
+## How do I get started?
 
-<Accordion>
-  <Accordion.Summary>Example Accordion</Accordion.Summary>
-  This is some example content inside the details element. It is hidden by
-  default and will be shown when the summary is clicked.
-</Accordion>
-```
+Get from zero to your first AI lip sync generation in three steps:
 
-<Accordion>
-  <Accordion.Summary>Example Accordion</Accordion.Summary>
+1. **Get your API key** — Create one from the [Dashboard](https://app.chamelaion.com/settings/api-keys).
+2. **Authenticate** — Pass your key as a Bearer token or `x-api-key` header. See the [Authentication guide](/guides/authentication).
+3. **Generate your first lip sync** — Follow the [Quickstart](/guides/quickstart) to generate a synced video in minutes.
 
-This is some example content inside the details element. It is hidden by default and will be shown
-when the summary is clicked.
+<Callout variant="info">
+  Chamelaion processes generation requests asynchronously. After submitting a job, you'll receive a `request_id` that you can use to [poll for the result](/guides/polling-status).
+</Callout>
 
-</Accordion>
+## API endpoints overview
 
-### Accordion.Group
+Chamelaion exposes a focused set of endpoints:
 
-```mdx
-import { Accordion } from "@stainless-api/docs/components";
+| Endpoint                          | Method | Description                                      |
+| :-------------------------------- | :----- | :----------------------------------------------- |
+| `/v1/lipsync/generate`            | POST   | Start a lip sync job from video and audio URLs   |
+| `/v1/lipsync/generate-with-media` | POST   | Start a lip sync job from uploaded files          |
+| `/v1/lipsync/requests/{id}`       | GET    | Get the status and result of a specific request  |
+| `/v1/lipsync/requests`            | GET    | List all your lip sync requests with pagination  |
+| `/v1/users/me`                    | GET    | Verify your API token identity                   |
+| `/health`                         | GET    | Service health check (no auth required)          |
+
+## Frequently asked questions
 
 <Accordion.Group>
   <Accordion>
-    <Accordion.Summary>First Accordion in Group</Accordion.Summary>
-    This is some example content inside the first details element in the group.
-  </Accordion>
-  <Accordion open>
-    <Accordion.Summary>Second Accordion in Group</Accordion.Summary>
-    This is some example content inside the second details element in the group.
-  </Accordion>
-  <Accordion>
-    <Accordion.Summary>Third Accordion in Group</Accordion.Summary>
-    This is some example content inside the third details element in the group.
-  </Accordion>
-</Accordion.Group>
-```
+    <Accordion.Summary>What video and audio formats does Chamelaion support?</Accordion.Summary>
 
-<Accordion.Group>
-  <Accordion>
-    <Accordion.Summary>First Accordion in Group</Accordion.Summary>
-    This is some example content inside the first details element in the group.
-  </Accordion>
-  <Accordion open>
-    <Accordion.Summary>Second Accordion in Group</Accordion.Summary>
-    This is some example content inside the second details element in the group.
+    Chamelaion accepts common video formats like **MP4** for video input and **WAV** or **MP3** for audio input. You can provide media via publicly accessible URLs or upload files directly through the multipart form-data endpoint.
+
   </Accordion>
   <Accordion>
-    <Accordion.Summary>Third Accordion in Group</Accordion.Summary>
-    This is some example content inside the third details element in the group.
+    <Accordion.Summary>How long does a generation take?</Accordion.Summary>
+
+    Generation time depends on video length and current queue depth. Most videos under 60 seconds complete within 1–3 minutes. You can poll the status of your request using the [request status endpoint](/guides/polling-status).
+
+  </Accordion>
+  <Accordion>
+    <Accordion.Summary>Can Chamelaion handle multi-person videos?</Accordion.Summary>
+
+    Yes. Chamelaion includes **active speaker detection** that automatically identifies and syncs the speaking person in multi-face videos. For single-speaker videos, you can disable this feature by setting `disable_active_speaker_detection: true` for faster processing.
+
+  </Accordion>
+  <Accordion>
+    <Accordion.Summary>How does authentication work?</Accordion.Summary>
+
+    Chamelaion supports two authentication methods: a **Bearer token** in the `Authorization` header or an **API key** in the `x-api-key` header. Both use the same API token from your dashboard. See the [Authentication guide](/guides/authentication) for details.
+
+  </Accordion>
+  <Accordion>
+    <Accordion.Summary>What happens if my generation fails?</Accordion.Summary>
+
+    When a generation fails, the request status will show `failed` with an `error_message` field explaining what went wrong. Common causes include inaccessible URLs, unsupported formats, or quota limits. See the [Error Handling guide](/guides/error-handling) for troubleshooting.
+
   </Accordion>
 </Accordion.Group>

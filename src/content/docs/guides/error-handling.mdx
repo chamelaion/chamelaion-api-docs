@@ -1,0 +1,287 @@
+---
+title: Error Handling
+description: Understanding error responses, HTTP status codes, rate limits, and troubleshooting common issues.
+---
+
+import { Callout, Accordion } from "@stainless-api/docs/components";
+
+The Chamelaion API uses standard HTTP status codes and returns consistent JSON error responses. This guide covers all error scenarios, rate limiting, and how to handle them in your application.
+
+## Error response format
+
+All errors follow the same structure:
+
+```json
+{
+  "error": "human-readable error message"
+}
+```
+
+The `error` field always contains a descriptive message explaining what went wrong.
+
+## HTTP status codes
+
+| Status | Meaning                  | Description                                             |
+| :----- | :----------------------- | :------------------------------------------------------ |
+| 200    | Success                  | Request completed successfully                           |
+| 400    | Bad Request              | Invalid request body, missing fields, or wrong format    |
+| 401    | Unauthorized             | Authentication failed or missing                         |
+| 404    | Not Found                | The requested lip sync job doesn't exist                 |
+| 412    | Precondition Failed      | Token limit reached — upgrade your plan                  |
+| 429    | Too Many Requests        | Rate limit exceeded — slow down                          |
+| 500    | Internal Server Error    | Something went wrong on our side                         |
+
+## 400 — Bad Request errors
+
+These indicate problems with your request format or content.
+
+### URL-based generation (`/v1/lipsync/generate`)
+
+| Error Message                                  | Cause                                              |
+| :--------------------------------------------- | :------------------------------------------------- |
+| `invalid request body`                         | JSON is malformed or doesn't match the schema      |
+| `content-type must be application/json`        | Missing or wrong `Content-Type` header             |
+| `expected exactly one video input`             | `inputs` doesn't contain exactly one video item     |
+| `expected exactly one audio input`             | `inputs` doesn't contain exactly one audio item     |
+| `input type must be "video" or "audio"`        | An input has an unrecognized `type` value           |
+
+### File upload (`/v1/lipsync/generate-with-media`)
+
+| Error Message                                  | Cause                                              |
+| :--------------------------------------------- | :------------------------------------------------- |
+| `content-type must be multipart/form-data`     | Wrong content type — must be `multipart/form-data`  |
+| `video file is required`                       | No `video` field in the form data                   |
+| `audio file is required`                       | No `audio` field in the form data                   |
+| `model must be "lipsync-2"`                    | Invalid model name specified                        |
+
+### Example: handling 400 errors
+
+```python
+import requests
+
+response = requests.post(
+    "https://api.chamelaion.com/api/v1/lipsync/generate",
+    headers={
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+    },
+    json={"inputs": []},  # Invalid: empty inputs
+)
+
+if response.status_code == 400:
+    error = response.json()
+    print(f"Bad request: {error['error']}")
+    # Bad request: expected exactly one video input
+```
+
+## 401 — Authentication errors
+
+See the [Authentication guide](/guides/authentication) for details. Common causes:
+
+| Error Message                    | Fix                                                      |
+| :------------------------------- | :------------------------------------------------------- |
+| `missing authorization header`   | Add `Authorization: Bearer <token>` or `x-api-key`       |
+| `invalid authorization format`   | Use `Bearer <token>` format (note the space after Bearer) |
+| `missing token`                  | Token value is empty                                      |
+| `invalid token`                  | Token is expired, revoked, or incorrect                   |
+
+## 404 — Not Found
+
+Returned when you request a lip sync job that doesn't exist:
+
+```json
+{
+  "error": "lipsync request not found"
+}
+```
+
+Double-check the `request_id` or `reference_id` you're using. Common causes:
+- Typo in the ID
+- The request belongs to a different account
+- Using a `reference_id` that was never set
+
+## 412 — Token Limit Reached
+
+Your account's generation quota has been exhausted:
+
+```json
+{
+  "error": "token limit reached"
+}
+```
+
+Upgrade your plan from the [Dashboard](https://app.chamelaion.com/plans) to increase your quota.
+
+## 429 — Rate Limit
+
+You've exceeded the request rate limit:
+
+```json
+{
+  "error": "rate limit exceeded"
+}
+```
+
+<Callout variant="note">
+  The generation endpoints are rate-limited to **60 requests per minute**. Implement exponential backoff to handle rate limits gracefully.
+</Callout>
+
+### Handling rate limits with retry logic
+
+```python
+import requests
+import time
+
+
+def api_request_with_retry(method, url, max_retries=3, **kwargs):
+    """Make an API request with automatic retry on rate limits."""
+    for attempt in range(max_retries + 1):
+        response = requests.request(method, url, **kwargs)
+
+        if response.status_code == 429:
+            wait_time = 2 ** attempt  # 1s, 2s, 4s
+            print(f"Rate limited. Retrying in {wait_time}s...")
+            time.sleep(wait_time)
+            continue
+
+        return response
+
+    raise Exception("Max retries exceeded due to rate limiting")
+```
+
+```typescript
+async function apiRequestWithRetry(
+  url: string,
+  options: RequestInit,
+  maxRetries = 3
+): Promise<Response> {
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    const response = await fetch(url, options);
+
+    if (response.status === 429) {
+      const waitTime = 2 ** attempt * 1000;
+      console.log(`Rate limited. Retrying in ${waitTime}ms...`);
+      await new Promise((r) => setTimeout(r, waitTime));
+      continue;
+    }
+
+    return response;
+  }
+
+  throw new Error("Max retries exceeded due to rate limiting");
+}
+```
+
+## 500 — Internal Server Error
+
+These indicate a problem on our side:
+
+```json
+{
+  "error": "internal error"
+}
+```
+
+If you encounter 500 errors:
+1. Retry the request after a short delay
+2. If the error persists, check the [status page](https://status.chamelaion.com)
+3. Contact support at [support@chamelaion.com](mailto:support@chamelaion.com) with the request details
+
+## Comprehensive error handling example
+
+Here's a robust Python function that handles all error types:
+
+```python
+import requests
+import time
+import os
+
+
+class ChamelaionError(Exception):
+    def __init__(self, status_code: int, message: str):
+        self.status_code = status_code
+        self.message = message
+        super().__init__(f"[{status_code}] {message}")
+
+
+class RateLimitError(ChamelaionError):
+    pass
+
+
+class AuthenticationError(ChamelaionError):
+    pass
+
+
+class QuotaExceededError(ChamelaionError):
+    pass
+
+
+def chamelaion_request(method: str, path: str, max_retries: int = 3, **kwargs):
+    """Make a request to the Chamelaion API with full error handling."""
+    base_url = "https://api.chamelaion.com/api"
+    headers = {"Authorization": f"Bearer {os.environ['CHAMELAION_API_KEY']}"}
+    kwargs.setdefault("headers", {}).update(headers)
+
+    for attempt in range(max_retries + 1):
+        response = requests.request(method, f"{base_url}{path}", **kwargs)
+
+        if response.status_code == 200:
+            return response.json()
+
+        error_msg = response.json().get("error", "unknown error")
+
+        if response.status_code == 429:
+            if attempt < max_retries:
+                wait = 2 ** attempt
+                time.sleep(wait)
+                continue
+            raise RateLimitError(429, error_msg)
+
+        if response.status_code == 401:
+            raise AuthenticationError(401, error_msg)
+
+        if response.status_code == 412:
+            raise QuotaExceededError(412, error_msg)
+
+        if response.status_code == 500 and attempt < max_retries:
+            time.sleep(2 ** attempt)
+            continue
+
+        raise ChamelaionError(response.status_code, error_msg)
+```
+
+## Troubleshooting
+
+<Accordion.Group>
+  <Accordion>
+    <Accordion.Summary>My generation is stuck in "queued" status</Accordion.Summary>
+
+    Jobs may stay in `queued` status during high-traffic periods. If a job remains queued for more than 10 minutes, contact support. Make sure your polling timeout is at least 10 minutes for production workloads.
+
+  </Accordion>
+  <Accordion>
+    <Accordion.Summary>The output video has no lip movement</Accordion.Summary>
+
+    This can happen if Chamelaion cannot detect a face in the video. Ensure your video has a clearly visible, front-facing speaker. For multi-person videos, make sure `disable_active_speaker_detection` is `false` so the correct speaker is identified.
+
+  </Accordion>
+  <Accordion>
+    <Accordion.Summary>My URLs return "video URL is not accessible"</Accordion.Summary>
+
+    Chamelaion's servers need to download your media. Ensure:
+    - The URLs are publicly accessible (no authentication required)
+    - The URLs don't have IP restrictions or geo-blocking
+    - The URLs return the actual media content (not an HTML page)
+    - Pre-signed URLs haven't expired
+
+  </Accordion>
+  <Accordion>
+    <Accordion.Summary>I keep getting 401 errors</Accordion.Summary>
+
+    - Verify your API key in the [Dashboard](https://app.chamelaion.com/settings/api-keys)
+    - Check that you're using the correct header format (`Bearer <token>` or `x-api-key: <token>`)
+    - Make sure there's no trailing whitespace in your token
+    - Confirm the key hasn't been revoked
+
+  </Accordion>
+</Accordion.Group>

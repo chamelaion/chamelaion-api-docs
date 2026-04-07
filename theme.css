@@ -1,10 +1,65 @@
 /*
- * Update the core accent colors that drive the accent theming.
- * If you wish to apply your own theme, these are the base variables to override
+ * Chamelaion Docs — Brand Theme
+ * Primary: #00C8A0 (teal)  Secondary: #9488FF (purple)
  */
 
 :root {
-  --stl-color-accent: light-dark(#155dfc, #2b7fff);
-  /* --stl-color-background: light-dark(#ffffff, #0a0a0a); */
-  /* --stl-color-foreground: light-dark(#262626, #f5f5f5); */
+  --stl-color-accent: light-dark(#00997a, #00C8A0);
+  --stl-color-background: light-dark(#ffffff, #0A0C11);
+  --stl-color-foreground: light-dark(#1a1a2e, #f0f0f5);
+}
+
+/* Scrollbar styling for dark mode */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #10151B;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #282D31;
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #3a3f44;
+  }
+}
+
+/* Code block enhancements */
+[data-theme="dark"] pre,
+:root:has(meta[name="color-scheme"][content*="dark"]) pre {
+  border: 1px solid #1e2530;
+}
+
+/* Subtle link underline animation */
+.sl-markdown-content a:not([class]) {
+  text-decoration-color: light-dark(rgba(0, 200, 160, 0.3), rgba(0, 200, 160, 0.3));
+  transition: text-decoration-color 0.2s ease;
+}
+.sl-markdown-content a:not([class]):hover {
+  text-decoration-color: light-dark(#00C8A0, #00C8A0);
+}
+
+/* Table styling */
+.sl-markdown-content table {
+  border-collapse: collapse;
+  width: 100%;
+}
+.sl-markdown-content th {
+  text-align: left;
+  font-weight: 600;
+}
+.sl-markdown-content td,
+.sl-markdown-content th {
+  padding: 0.625rem 1rem;
+  border-bottom: 1px solid light-dark(#e5e7eb, #1e2530);
+}
+
+/* Hero-like intro styling for the first paragraph on the index page */
+.sl-markdown-content > p:first-of-type {
+  font-size: 1.125rem;
+  line-height: 1.75;
+  color: light-dark(#4a5568, #a0aec0);
 }

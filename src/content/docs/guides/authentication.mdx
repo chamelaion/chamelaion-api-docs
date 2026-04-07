@@ -1,0 +1,146 @@
+---
+title: Authentication
+description: How to authenticate with the Chamelaion API using Bearer tokens or API key headers.
+---
+
+import { Callout } from "@stainless-api/docs/components";
+
+Every request to the Chamelaion API (except `/health`) requires authentication. Chamelaion supports two authentication methods — both use the same API token from your dashboard.
+
+## Getting your API key
+
+1. Log in to the [Chamelaion Dashboard](https://app.chamelaion.com)
+2. Navigate to **Settings** → **API Keys**
+3. Click **Create new key**
+4. Give your key a descriptive name (e.g., "Production Server" or "Dev Testing")
+5. Copy the key immediately — it won't be shown again
+
+<Callout variant="note">
+  Store your API key securely. Use environment variables or a secrets manager — never hard-code keys in source files or commit them to version control.
+</Callout>
+
+## Method 1: Bearer token (recommended)
+
+Pass your API token in the `Authorization` header with the `Bearer` prefix:
+
+```bash
+curl https://api.chamelaion.com/api/v1/users/me \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.chamelaion.com/api/v1/users/me",
+    headers={"Authorization": "Bearer YOUR_API_KEY"},
+)
+print(response.json())
+# {"name": "My API Token"}
+```
+
+```typescript
+const response = await fetch("https://api.chamelaion.com/api/v1/users/me", {
+  headers: { Authorization: "Bearer YOUR_API_KEY" },
+});
+const data = await response.json();
+console.log(data);
+// { name: "My API Token" }
+```
+
+## Method 2: API key header
+
+Alternatively, pass your token in the `x-api-key` header:
+
+```bash
+curl https://api.chamelaion.com/api/v1/users/me \
+  -H "x-api-key: YOUR_API_KEY"
+```
+
+```python
+import requests
+
+response = requests.get(
+    "https://api.chamelaion.com/api/v1/users/me",
+    headers={"x-api-key": "YOUR_API_KEY"},
+)
+print(response.json())
+```
+
+This method is useful when integrating with tools or platforms that have dedicated API key fields but don't support custom `Authorization` header formats.
+
+## Verifying your token
+
+Use the `/v1/users/me` endpoint to verify that your token is valid and see the identity associated with it:
+
+```bash
+curl https://api.chamelaion.com/api/v1/users/me \
+  -H "Authorization: Bearer YOUR_API_KEY"
+```
+
+A successful response returns:
+
+```json
+{
+  "name": "My API Token"
+}
+```
+
+If your token is invalid or missing, you'll receive a `401 Unauthorized` response:
+
+```json
+{
+  "error": "invalid token"
+}
+```
+
+## Using environment variables
+
+We recommend storing your API key in an environment variable:
+
+### Bash / Zsh
+
+```bash
+export CHAMELAION_API_KEY="your-api-key-here"
+
+curl https://api.chamelaion.com/api/v1/users/me \
+  -H "Authorization: Bearer $CHAMELAION_API_KEY"
+```
+
+### Python
+
+```python
+import os
+import requests
+
+api_key = os.environ["CHAMELAION_API_KEY"]
+
+response = requests.get(
+    "https://api.chamelaion.com/api/v1/users/me",
+    headers={"Authorization": f"Bearer {api_key}"},
+)
+```
+
+### TypeScript / Node.js
+
+```typescript
+const apiKey = process.env.CHAMELAION_API_KEY!;
+
+const response = await fetch("https://api.chamelaion.com/api/v1/users/me", {
+  headers: { Authorization: `Bearer ${apiKey}` },
+});
+```
+
+## Common authentication errors
+
+| HTTP Status | Error Message                    | Cause                                         |
+| :---------- | :------------------------------- | :-------------------------------------------- |
+| 401         | `missing authorization header`   | No `Authorization` or `x-api-key` header sent |
+| 401         | `invalid authorization format`   | `Authorization` header is malformed            |
+| 401         | `missing token`                  | Header is present but the token value is empty |
+| 401         | `invalid token`                  | The token doesn't match any active API key     |
+| 401         | `unauthorized`                   | Generic authentication failure                 |
+
+<Callout variant="info">
+  If you're getting `401` errors, double-check that your key hasn't been revoked and that you're not accidentally including extra whitespace or newlines in the token value.
+</Callout>
