@@ -15,16 +15,16 @@ Use `POST /v1/lipsync/generate` when your video and audio are hosted at publicly
 
 ```json
 {
-  "reference_id": "optional-your-id",
+  "reference_id": "normal-lipsync-demo",
   "disable_active_speaker_detection": false,
   "inputs": [
     {
       "type": "video",
-      "url": "https://example.com/source-video.mp4"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"
     },
     {
       "type": "audio",
-      "url": "https://example.com/target-audio.wav"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"
     }
   ]
 }
@@ -32,13 +32,13 @@ Use `POST /v1/lipsync/generate` when your video and audio are hosted at publicly
 
 ### Parameters
 
-| Parameter                          | Type     | Required | Description                                                               |
-| :--------------------------------- | :------- | :------- | :------------------------------------------------------------------------ |
-| `inputs`                           | array    | Yes      | Exactly two items: one `video` and one `audio` input (order doesn't matter) |
-| `inputs[].type`                    | string   | Yes      | Either `"video"` or `"audio"`                                              |
-| `inputs[].url`                     | string   | Yes      | Publicly accessible URL to the media file                                  |
-| `reference_id`                     | string   | No       | Your own identifier for this request, useful for linking to your systems    |
-| `disable_active_speaker_detection` | boolean  | No       | Set to `true` to skip speaker detection and use max-face mode (default: `false`) |
+| Parameter                          | Type    | Required | Description                                                                             |
+| :--------------------------------- | :------ | :------- | :-------------------------------------------------------------------------------------- |
+| `inputs`                           | array   | Yes      | Exactly two items: one `video` and one `audio` input (order doesn't matter)             |
+| `inputs[].type`                    | string  | Yes      | Either `"video"` or `"audio"`                                                           |
+| `inputs[].url`                     | string  | Yes      | Publicly accessible URL to the media file                                               |
+| `reference_id`                     | string  | No       | Your own identifier for this request, useful for linking to your systems                |
+| `disable_active_speaker_detection` | boolean | No       | Set to `true` to skip active speaker detection and use max-face mode (default: `false`) |
 
 ### cURL example
 
@@ -47,10 +47,10 @@ curl -X POST https://api.chamelaion.com/api/v1/lipsync/generate \
   -H "Authorization: Bearer $CHAMELAION_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
-    "reference_id": "dub-episode-42",
+    "reference_id": "normal-lipsync-demo",
     "inputs": [
-      {"type": "video", "url": "https://cdn.example.com/episodes/42.mp4"},
-      {"type": "audio", "url": "https://cdn.example.com/dubs/42-japanese.wav"}
+      {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"},
+      {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"}
     ]
   }'
 ```
@@ -68,10 +68,10 @@ response = requests.post(
         "Content-Type": "application/json",
     },
     json={
-        "reference_id": "dub-episode-42",
+        "reference_id": "normal-lipsync-demo",
         "inputs": [
-            {"type": "video", "url": "https://cdn.example.com/episodes/42.mp4"},
-            {"type": "audio", "url": "https://cdn.example.com/dubs/42-japanese.wav"},
+            {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"},
+            {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"},
         ],
     },
 )
@@ -92,13 +92,19 @@ const response = await fetch(
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      reference_id: "dub-episode-42",
+      reference_id: "normal-lipsync-demo",
       inputs: [
-        { type: "video", url: "https://cdn.example.com/episodes/42.mp4" },
-        { type: "audio", url: "https://cdn.example.com/dubs/42-japanese.wav" },
+        {
+          type: "video",
+          url: "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4",
+        },
+        {
+          type: "audio",
+          url: "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav",
+        },
       ],
     }),
-  }
+  },
 );
 
 const result = await response.json();
@@ -120,13 +126,13 @@ Use `POST /v1/lipsync/generate-with-media` when you need to upload files directl
 
 ### Parameters
 
-| Field                              | Type    | Required | Description                                                         |
-| :--------------------------------- | :------ | :------- | :------------------------------------------------------------------ |
-| `video`                            | file    | Yes      | Source video file (MP4)                                              |
-| `audio`                            | file    | Yes      | Target audio file (WAV or MP3)                                       |
-| `model`                            | string  | No       | Model to use (currently `"lipsync-2"`)                               |
-| `reference_id`                     | string  | No       | Your own identifier for this request                                 |
-| `disable_active_speaker_detection` | boolean | No       | Set to `true` to skip speaker detection (default: `false`)           |
+| Field                              | Type    | Required | Description                                                |
+| :--------------------------------- | :------ | :------- | :--------------------------------------------------------- |
+| `video`                            | file    | Yes      | Source video file (MP4)                                    |
+| `audio`                            | file    | Yes      | Target audio file (WAV or MP3)                             |
+| `model`                            | string  | No       | Model to use (currently `"lipsync-2"`)                     |
+| `reference_id`                     | string  | No       | Your own identifier for this request                       |
+| `disable_active_speaker_detection` | boolean | No       | Set to `true` to skip speaker detection (default: `false`) |
 
 ### cURL example
 
@@ -179,7 +185,7 @@ const response = await fetch(
       Authorization: `Bearer ${process.env.CHAMELAION_API_KEY}`,
     },
     body: formData,
-  }
+  },
 );
 
 const result = await response.json();
@@ -190,26 +196,59 @@ The response format is identical to the URL-based endpoint.
 
 ## Active speaker detection
 
-By default, Chamelaion uses active speaker detection to identify which face in the video is speaking and only applies lip sync to that face. This is useful for:
+Active speaker detection (ASD) decides which visible face is currently speaking before applying lip sync. When ASD is enabled, Chamelaion analyzes the video and audio together, chooses the active speaker, and syncs only that person's mouth. This is the default behavior.
+
+ASD is useful for:
 
 - Multi-person interview or conversation videos
 - Videos with background faces or audience members
 - News broadcasts with anchor and on-screen graphics
 
-To disable this and use max-face mode (syncs the largest detected face), set `disable_active_speaker_detection` to `true`:
+### Example with active speaker detection
+
+Omit `disable_active_speaker_detection` or set it to `false` to use ASD. This example uses the active-speaker test media:
 
 ```json
 {
+  "reference_id": "with-asd-demo",
+  "disable_active_speaker_detection": false,
+  "inputs": [
+    {
+      "type": "video",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"
+    },
+    {
+      "type": "audio",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"
+    }
+  ]
+}
+```
+
+### Example without active speaker detection
+
+Set `disable_active_speaker_detection` to `true` to skip ASD and use max-face mode instead. In max-face mode, Chamelaion syncs the largest detected face in the video. This can be faster and works well for simple single-speaker videos where the main face is clearly the target.
+
+```json
+{
+  "reference_id": "without-asd-demo",
   "disable_active_speaker_detection": true,
   "inputs": [
-    {"type": "video", "url": "https://example.com/single-speaker.mp4"},
-    {"type": "audio", "url": "https://example.com/new-audio.wav"}
+    {
+      "type": "video",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"
+    },
+    {
+      "type": "audio",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"
+    }
   ]
 }
 ```
 
 <Callout variant="info">
-  Disabling active speaker detection can speed up processing for single-speaker videos where face detection is straightforward.
+  Keep active speaker detection enabled for multi-person videos. Disable it only
+  when you know the largest visible face is the one that should be lip-synced.
 </Callout>
 
 ## Using reference IDs
@@ -224,8 +263,14 @@ The `reference_id` field lets you tag requests with your own identifiers. This i
 {
   "reference_id": "order-12345-japanese-dub",
   "inputs": [
-    {"type": "video", "url": "https://example.com/video.mp4"},
-    {"type": "audio", "url": "https://example.com/audio.wav"}
+    {
+      "type": "video",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"
+    },
+    {
+      "type": "audio",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"
+    }
   ]
 }
 ```
