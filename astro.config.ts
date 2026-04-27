@@ -118,7 +118,61 @@ export default defineConfig({
         },
       },
       title: "Chamelaion",
-      favicon: "/favicon.ico",
+      favicon: "/favicon/favicon.ico?v=black",
+      head: [
+        {
+          tag: "link",
+          attrs: {
+            rel: "icon",
+            sizes: "48x48",
+            href: "/favicon/favicon.ico?v=black",
+          },
+        },
+        {
+          tag: "link",
+          attrs: {
+            rel: "icon",
+            type: "image/png",
+            sizes: "16x16",
+            href: "/favicon/favicon-16x16.png?v=black",
+          },
+        },
+        {
+          tag: "link",
+          attrs: {
+            rel: "icon",
+            type: "image/png",
+            sizes: "32x32",
+            href: "/favicon/favicon-32x32.png?v=black",
+          },
+        },
+        {
+          tag: "link",
+          attrs: {
+            rel: "apple-touch-icon",
+            sizes: "180x180",
+            href: "/favicon/apple-touch-icon.png?v=black",
+          },
+        },
+        {
+          tag: "link",
+          attrs: {
+            rel: "icon",
+            type: "image/png",
+            sizes: "192x192",
+            href: "/favicon/android-chrome-192x192.png?v=black",
+          },
+        },
+        {
+          tag: "link",
+          attrs: {
+            rel: "icon",
+            type: "image/png",
+            sizes: "512x512",
+            href: "/favicon/android-chrome-512x512.png?v=black",
+          },
+        },
+      ],
       logo: {
         dark: "./src/assets/logo-dark.svg",
         light: "./src/assets/logo-light.svg",
