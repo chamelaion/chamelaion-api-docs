@@ -5,7 +5,7 @@ description: Learn how to generate AI lip sync videos using URLs or direct file 
 
 import { Callout, Accordion } from "@stainless-api/docs/components";
 
-Chamelaion provides two endpoints for generating lip sync videos — one that accepts media URLs and another that accepts direct file uploads. Both create an asynchronous job and return a `request_id` for tracking.
+Chamelaion provides two endpoints for generating lip sync videos: one accepts media URLs and another accepts direct file uploads. Both create an asynchronous job and return a `request_id` for tracking.
 
 ## Option 1: Generate from URLs
 
@@ -34,10 +34,10 @@ Use `POST /v1/lipsync/generate` when your video and audio are hosted at publicly
 
 | Parameter                          | Type     | Required | Description                                                               |
 | :--------------------------------- | :------- | :------- | :------------------------------------------------------------------------ |
-| `inputs`                           | array    | Yes      | Exactly two items — one `video` and one `audio` input (order doesn't matter) |
+| `inputs`                           | array    | Yes      | Exactly two items: one `video` and one `audio` input (order doesn't matter) |
 | `inputs[].type`                    | string   | Yes      | Either `"video"` or `"audio"`                                              |
 | `inputs[].url`                     | string   | Yes      | Publicly accessible URL to the media file                                  |
-| `reference_id`                     | string   | No       | Your own identifier for this request — useful for linking to your systems   |
+| `reference_id`                     | string   | No       | Your own identifier for this request, useful for linking to your systems    |
 | `disable_active_speaker_detection` | boolean  | No       | Set to `true` to skip speaker detection and use max-face mode (default: `false`) |
 
 ### cURL example

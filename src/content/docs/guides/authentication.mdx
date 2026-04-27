@@ -5,7 +5,7 @@ description: How to authenticate with the Chamelaion API using Bearer tokens or 
 
 import { Callout } from "@stainless-api/docs/components";
 
-Every request to the Chamelaion API (except `/health`) requires authentication. Chamelaion supports two authentication methods — both use the same API token from your dashboard.
+Every request to the Chamelaion API (except `/health`) requires authentication. Chamelaion supports two authentication methods, and both use the same API token from your dashboard.
 
 ## Getting your API key
 
@@ -13,10 +13,10 @@ Every request to the Chamelaion API (except `/health`) requires authentication. 
 2. Navigate to **Settings** → **API Keys**
 3. Click **Create new key**
 4. Give your key a descriptive name (e.g., "Production Server" or "Dev Testing")
-5. Copy the key immediately — it won't be shown again
+5. Copy the key immediately; it won't be shown again
 
 <Callout variant="note">
-  Store your API key securely. Use environment variables or a secrets manager — never hard-code keys in source files or commit them to version control.
+  Store your API key securely. Use environment variables or a secrets manager, and never hard-code keys in source files or commit them to version control.
 </Callout>
 
 ## Method 1: Bearer token (recommended)

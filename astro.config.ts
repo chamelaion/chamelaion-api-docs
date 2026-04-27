@@ -118,6 +118,7 @@ export default defineConfig({
         },
       },
       title: "Chamelaion",
+      favicon: "/favicon.ico",
       logo: {
         dark: "./src/assets/logo-dark.svg",
         light: "./src/assets/logo-light.svg",

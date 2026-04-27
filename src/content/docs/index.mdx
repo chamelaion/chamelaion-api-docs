@@ -1,11 +1,11 @@
 ---
 title: Introduction
-description: Chamelaion API documentation — AI-powered lip sync for video dubbing, content localization, and personalized video at scale.
+description: Chamelaion API documentation for AI-powered lip sync, video dubbing, content localization, and personalized video at scale.
 ---
 
 import { Callout, Accordion } from "@stainless-api/docs/components";
 
-Chamelaion is an AI lip sync API that takes any video and audio input and generates perfectly matched lip movements. Send a video of someone speaking English and an audio track in Japanese — Chamelaion produces a new video where the speaker's lips move naturally to match the Japanese audio. This powers video dubbing, content localization, personalized video messaging, and more.
+Chamelaion is an AI lip sync API that takes any video and audio input and generates perfectly matched lip movements. Send a video of someone speaking English and an audio track in Japanese. Chamelaion produces a new video where the speaker's lips move naturally to match the Japanese audio. This powers video dubbing, content localization, personalized video messaging, and more.
 
 ## At a glance
 
@@ -13,7 +13,7 @@ Chamelaion is an AI lip sync API that takes any video and audio input and genera
 | :------------------------- | :--------------------------------------------------------------- |
 | **Base URL**               | `https://api.chamelaion.com/api`                                 |
 | **Authentication**         | Bearer token or `x-api-key` header                               |
-| **Input formats**          | MP4 video, WAV/MP3 audio — via URL or direct upload              |
+| **Input formats**          | MP4 video and WAV/MP3 audio, via URL or direct upload            |
 | **Max concurrent jobs**    | Depends on plan                                                  |
 | **Rate limit**             | 60 requests/min on generation endpoints                          |
 | **SDKs**                   | Python 3.8+ and TypeScript/Node.js 18+                           |
@@ -21,29 +21,29 @@ Chamelaion is an AI lip sync API that takes any video and audio input and genera
 
 ## Key capabilities
 
-- **AI Lip Sync** — State-of-the-art lip sync model that preserves the speaker's identity, head pose, and expressions while matching lip movements to new audio.
-- **URL-based generation** — Pass publicly accessible URLs for your video and audio. No file uploads required.
-- **Direct media upload** — Upload video and audio files directly via multipart form-data when URLs are not available.
-- **Active speaker detection** — Automatically detects and syncs the active speaker in multi-person scenes. Can be disabled for single-speaker videos.
-- **Request tracking** — Every generation returns a `request_id`. Poll for status, retrieve results, or filter by your own `reference_id`.
-- **Pagination** — List and paginate through your generation history with `limit` and `offset` parameters.
+- **AI Lip Sync:** State-of-the-art lip sync model that preserves the speaker's identity, head pose, and expressions while matching lip movements to new audio.
+- **URL-based generation:** Pass publicly accessible URLs for your video and audio. No file uploads required.
+- **Direct media upload:** Upload video and audio files directly via multipart form-data when URLs are not available.
+- **Active speaker detection:** Automatically detects and syncs the active speaker in multi-person scenes. Can be disabled for single-speaker videos.
+- **Request tracking:** Every generation returns a `request_id`. Poll for status, retrieve results, or filter by your own `reference_id`.
+- **Pagination:** List and paginate through your generation history with `limit` and `offset` parameters.
 
 ## What can I build with Chamelaion?
 
 Chamelaion fits anywhere you need lip movements to match new audio:
 
-- **Video dubbing & localization** — Dub films, YouTube videos, and social content for global audiences with AI lip sync that looks native.
-- **E-learning & training** — Localize course videos into dozens of languages while keeping the instructor's face natural and in sync.
-- **Marketing & personalized outreach** — Generate personalized video messages at scale. One recording becomes thousands of tailored videos.
-- **Entertainment, media & gaming** — Power in-game characters, animated content, and post-production dubbing with lip sync technology that runs on API calls.
+- **Video dubbing & localization:** Dub films, YouTube videos, and social content for global audiences with AI lip sync that looks native.
+- **E-learning & training:** Localize course videos into dozens of languages while keeping the instructor's face natural and in sync.
+- **Marketing & personalized outreach:** Generate personalized video messages at scale. One recording becomes thousands of tailored videos.
+- **Entertainment, media & gaming:** Power in-game characters, animated content, and post-production dubbing with lip sync technology that runs on API calls.
 
 ## How do I get started?
 
 Get from zero to your first AI lip sync generation in three steps:
 
-1. **Get your API key** — Create one from the [Dashboard](https://app.chamelaion.com/settings/api-keys).
-2. **Authenticate** — Pass your key as a Bearer token or `x-api-key` header. See the [Authentication guide](/guides/authentication).
-3. **Generate your first lip sync** — Follow the [Quickstart](/guides/quickstart) to generate a synced video in minutes.
+1. **Get your API key:** Create one from the [Dashboard](https://app.chamelaion.com/settings/api-keys).
+2. **Authenticate:** Pass your key as a Bearer token or `x-api-key` header. See the [Authentication guide](/guides/authentication).
+3. **Generate your first lip sync:** Follow the [Quickstart](/guides/quickstart) to generate a synced video in minutes.
 
 <Callout variant="info">
   Chamelaion processes generation requests asynchronously. After submitting a job, you'll receive a `request_id` that you can use to [poll for the result](/guides/polling-status).

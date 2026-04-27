@@ -15,8 +15,8 @@ Every lip sync request goes through these stages:
 | :---------- | :------------------------------------------------------- |
 | `queued`    | Request received and waiting to be processed             |
 | `processing`| Lip sync generation is in progress                       |
-| `completed` | Generation finished — `output_url` is available          |
-| `failed`    | Generation failed — check `error_message` for details    |
+| `completed` | Generation finished. `output_url` is available           |
+| `failed`    | Generation failed. Check `error_message` for details     |
 
 ## Get a single request
 
@@ -170,7 +170,7 @@ curl "https://api.chamelaion.com/api/v1/lipsync/requests?reference_id=batch-2026
 | :------------- | :------ | :------ | :-------------------------------------------- |
 | `limit`        | integer | 20      | Number of results per page (minimum 1)         |
 | `offset`       | integer | 0       | Number of results to skip                      |
-| `reference_id` | string  | —       | Filter by exact `reference_id`                 |
+| `reference_id` | string  | None    | Filter by exact `reference_id`                 |
 
 ### Response
 

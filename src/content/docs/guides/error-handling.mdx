@@ -27,11 +27,11 @@ The `error` field always contains a descriptive message explaining what went wro
 | 400    | Bad Request              | Invalid request body, missing fields, or wrong format    |
 | 401    | Unauthorized             | Authentication failed or missing                         |
 | 404    | Not Found                | The requested lip sync job doesn't exist                 |
-| 412    | Precondition Failed      | Token limit reached — upgrade your plan                  |
-| 429    | Too Many Requests        | Rate limit exceeded — slow down                          |
+| 412    | Precondition Failed      | Token limit reached. Upgrade your plan                   |
+| 429    | Too Many Requests        | Rate limit exceeded. Slow down                           |
 | 500    | Internal Server Error    | Something went wrong on our side                         |
 
-## 400 — Bad Request errors
+## 400 - Bad Request errors
 
 These indicate problems with your request format or content.
 
@@ -49,7 +49,7 @@ These indicate problems with your request format or content.
 
 | Error Message                                  | Cause                                              |
 | :--------------------------------------------- | :------------------------------------------------- |
-| `content-type must be multipart/form-data`     | Wrong content type — must be `multipart/form-data`  |
+| `content-type must be multipart/form-data`     | Wrong content type. Must be `multipart/form-data`   |
 | `video file is required`                       | No `video` field in the form data                   |
 | `audio file is required`                       | No `audio` field in the form data                   |
 | `model must be "lipsync-2"`                    | Invalid model name specified                        |
@@ -74,7 +74,7 @@ if response.status_code == 400:
     # Bad request: expected exactly one video input
 ```
 
-## 401 — Authentication errors
+## 401 - Authentication errors
 
 See the [Authentication guide](/guides/authentication) for details. Common causes:
 
@@ -85,7 +85,7 @@ See the [Authentication guide](/guides/authentication) for details. Common cause
 | `missing token`                  | Token value is empty                                      |
 | `invalid token`                  | Token is expired, revoked, or incorrect                   |
 
-## 404 — Not Found
+## 404 - Not Found
 
 Returned when you request a lip sync job that doesn't exist:
 
@@ -100,7 +100,7 @@ Double-check the `request_id` or `reference_id` you're using. Common causes:
 - The request belongs to a different account
 - Using a `reference_id` that was never set
 
-## 412 — Token Limit Reached
+## 412 - Token Limit Reached
 
 Your account's generation quota has been exhausted:
 
@@ -112,7 +112,7 @@ Your account's generation quota has been exhausted:
 
 Upgrade your plan from the [Dashboard](https://app.chamelaion.com/plans) to increase your quota.
 
-## 429 — Rate Limit
+## 429 - Rate Limit
 
 You've exceeded the request rate limit:
 
@@ -172,7 +172,7 @@ async function apiRequestWithRetry(
 }
 ```
 
-## 500 — Internal Server Error
+## 500 - Internal Server Error
 
 These indicate a problem on our side:
 
