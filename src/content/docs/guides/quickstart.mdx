@@ -37,11 +37,11 @@ curl -X POST https://api.chamelaion.com/api/v1/lipsync/generate \
     "inputs": [
       {
         "type": "video",
-        "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"
+        "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"
       },
       {
         "type": "audio",
-        "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"
+        "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"
       }
     ]
   }'
@@ -64,8 +64,8 @@ response = requests.post(
     json={
         "reference_id": "my-first-lipsync",
         "inputs": [
-            {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"},
-            {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"},
+            {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"},
+            {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"},
         ],
     },
 )
@@ -92,11 +92,11 @@ const response = await fetch(`${BASE_URL}/v1/lipsync/generate`, {
     inputs: [
       {
         type: "video",
-        url: "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4",
+        url: "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4",
       },
       {
         type: "audio",
-        url: "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav",
+        url: "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav",
       },
     ],
   }),
@@ -171,8 +171,8 @@ response = requests.post(
     json={
         "reference_id": "quickstart-demo",
         "inputs": [
-            {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4"},
-            {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav"},
+            {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"},
+            {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"},
         ],
     },
 )
