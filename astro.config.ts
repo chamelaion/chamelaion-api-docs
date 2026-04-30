@@ -117,7 +117,7 @@ export default defineConfig({
           expandDepth: 2,
         },
       },
-      title: "Chamelaion",
+      title: "CHAMELAION",
       favicon: "/favicon/favicon.ico?v=black",
       head: [
         {
@@ -176,7 +176,7 @@ export default defineConfig({
       logo: {
         dark: "./src/assets/logo-dark.svg",
         light: "./src/assets/logo-light.svg",
-        alt: "Chamelaion",
+        alt: "CHAMELAION",
       },
       customCss: ["./theme.css"],
       header: {

@@ -5,7 +5,7 @@ description: Understanding error responses, HTTP status codes, rate limits, and 
 
 import { Callout, Accordion } from "@stainless-api/docs/components";
 
-The Chamelaion API uses standard HTTP status codes and returns consistent JSON error responses. This guide covers all error scenarios, rate limiting, and how to handle them in your application.
+The CHAMELAION API uses standard HTTP status codes and returns consistent JSON error responses. This guide covers all error scenarios, rate limiting, and how to handle them in your application.
 
 ## Error response format
 
@@ -197,27 +197,27 @@ import time
 import os
 
 
-class ChamelaionError(Exception):
+class CHAMELAIONError(Exception):
     def __init__(self, status_code: int, message: str):
         self.status_code = status_code
         self.message = message
         super().__init__(f"[{status_code}] {message}")
 
 
-class RateLimitError(ChamelaionError):
+class RateLimitError(CHAMELAIONError):
     pass
 
 
-class AuthenticationError(ChamelaionError):
+class AuthenticationError(CHAMELAIONError):
     pass
 
 
-class QuotaExceededError(ChamelaionError):
+class QuotaExceededError(CHAMELAIONError):
     pass
 
 
 def chamelaion_request(method: str, path: str, max_retries: int = 3, **kwargs):
-    """Make a request to the Chamelaion API with full error handling."""
+    """Make a request to the CHAMELAION API with full error handling."""
     base_url = "https://api.chamelaion.com/api"
     headers = {"Authorization": f"Bearer {os.environ['CHAMELAION_API_KEY']}"}
     kwargs.setdefault("headers", {}).update(headers)
@@ -247,7 +247,7 @@ def chamelaion_request(method: str, path: str, max_retries: int = 3, **kwargs):
             time.sleep(2 ** attempt)
             continue
 
-        raise ChamelaionError(response.status_code, error_msg)
+        raise CHAMELAIONError(response.status_code, error_msg)
 ```
 
 ## Troubleshooting
@@ -262,13 +262,13 @@ def chamelaion_request(method: str, path: str, max_retries: int = 3, **kwargs):
   <Accordion>
     <Accordion.Summary>The output video has no lip movement</Accordion.Summary>
 
-    This can happen if Chamelaion cannot detect a face in the video. Ensure your video has a clearly visible, front-facing speaker. For multi-person videos, make sure `disable_active_speaker_detection` is `false` so the correct speaker is identified.
+    This can happen if CHAMELAION cannot detect a face in the video. Ensure your video has a clearly visible, front-facing speaker. For multi-person videos, make sure `disable_active_speaker_detection` is `false` so the correct speaker is identified.
 
   </Accordion>
   <Accordion>
     <Accordion.Summary>My URLs return "video URL is not accessible"</Accordion.Summary>
 
-    Chamelaion's servers need to download your media. Ensure:
+    CHAMELAION's servers need to download your media. Ensure:
     - The URLs are publicly accessible (no authentication required)
     - The URLs don't have IP restrictions or geo-blocking
     - The URLs return the actual media content (not an HTML page)

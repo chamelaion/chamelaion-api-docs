@@ -1,12 +1,33 @@
 /*
- * Chamelaion Docs Brand Theme
- * Primary: #00C8A0 (teal)  Secondary: #9488FF (purple)
+ * CHAMELAION Docs Brand Theme
+ * Monochrome palette (black / white) with Bricolage Grotesque headings
+ * and Degular body text (Google Sans fallback).
  */
 
+/* Headings: Bricolage Grotesque (Google Fonts) */
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,200..800&display=swap');
+
 :root {
-  --stl-color-accent: light-dark(#00997a, #00C8A0);
-  --stl-color-background: light-dark(#ffffff, #0A0C11);
-  --stl-color-foreground: light-dark(#1a1a2e, #f0f0f5);
+  /* Background / foreground tokens */
+  --stl-color-background: light-dark(#ffffff, #0a0c11);
+  --stl-color-foreground: light-dark(#0a0c11, #ffffff);
+
+  /* Neutral accent: links, focus rings, sidebar highlights, etc. */
+  --stl-color-accent: light-dark(#0a0c11, #ffffff);
+  --stl-color-accent-foreground: var(--stl-color-accent);
+  --stl-color-accent-border-strong: var(--stl-color-accent);
+  --stl-color-accent-inverse-background: var(--stl-color-accent);
+  --stl-color-accent-inverse-foreground: light-dark(#ffffff, #0a0c11);
+
+  /* Typography
+   * Body: Degular (preferred), Google Sans (fallback), then system stack.
+   * Heading: Bricolage Grotesque.
+   */
+  --stl-typography-font:
+    'Degular', 'Google Sans', system-ui, -apple-system, BlinkMacSystemFont,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --stl-typography-font-heading:
+    'Bricolage Grotesque', 'Degular', 'Google Sans', system-ui, sans-serif;
 }
 
 /* Scrollbar styling for dark mode */
@@ -16,10 +37,10 @@
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #10151B;
+    background: #10151b;
   }
   ::-webkit-scrollbar-thumb {
-    background: #282D31;
+    background: #282d31;
     border-radius: 4px;
   }
   ::-webkit-scrollbar-thumb:hover {
@@ -28,18 +49,18 @@
 }
 
 /* Code block enhancements */
-[data-theme="dark"] pre,
-:root:has(meta[name="color-scheme"][content*="dark"]) pre {
+[data-theme='dark'] pre,
+:root:has(meta[name='color-scheme'][content*='dark']) pre {
   border: 1px solid #1e2530;
 }
 
-/* Subtle link underline animation */
+/* Subtle link underline animation (monochrome) */
 .sl-markdown-content a:not([class]) {
-  text-decoration-color: light-dark(rgba(0, 200, 160, 0.3), rgba(0, 200, 160, 0.3));
+  text-decoration-color: light-dark(rgba(10, 12, 17, 0.3), rgba(255, 255, 255, 0.3));
   transition: text-decoration-color 0.2s ease;
 }
 .sl-markdown-content a:not([class]):hover {
-  text-decoration-color: light-dark(#00C8A0, #00C8A0);
+  text-decoration-color: light-dark(#0a0c11, #ffffff);
 }
 
 /* Table styling */

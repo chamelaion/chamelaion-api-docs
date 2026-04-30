@@ -1,11 +1,11 @@
 ---
 title: Introduction
-description: Chamelaion API documentation for AI-powered lip sync, video dubbing, content localization, and personalized video at scale.
+description: CHAMELAION API documentation for AI-powered lip sync, video dubbing, content localization, and personalized video at scale.
 ---
 
 import { Callout, Accordion } from "@stainless-api/docs/components";
 
-Chamelaion is an AI lip sync API that takes any video and audio input and generates perfectly matched lip movements. Send a video of someone speaking English and an audio track in Japanese. Chamelaion produces a new video where the speaker's lips move naturally to match the Japanese audio. This powers video dubbing, content localization, personalized video messaging, and more.
+Our lip sync API takes any video and audio input and generates perfectly matched lip movements. Send a video of someone speaking English and an audio track in Japanese. CHAMELAION produces a new video where the speaker's lips move naturally to match the Japanese audio. This powers video dubbing, content localization, personalized video messaging, and more.
 
 ## At a glance
 
@@ -21,21 +21,21 @@ Chamelaion is an AI lip sync API that takes any video and audio input and genera
 
 ## Key capabilities
 
-- **AI Lip Sync:** State-of-the-art lip sync model that preserves the speaker's identity, head pose, and expressions while matching lip movements to new audio.
+- **AI Lip Sync:** State-of-the-art lip sync model that preserves the speaker's identity, speaking style, and expressions while matching lip movements to new audio.
 - **URL-based generation:** Pass publicly accessible URLs for your video and audio. No file uploads required.
 - **Direct media upload:** Upload video and audio files directly via multipart form-data when URLs are not available.
 - **Active speaker detection:** Automatically detects and syncs the active speaker in multi-person scenes. Can be disabled for single-speaker videos.
 - **Request tracking:** Every generation returns a `request_id`. Poll for status, retrieve results, or filter by your own `reference_id`.
 - **Pagination:** List and paginate through your generation history with `limit` and `offset` parameters.
 
-## What can I build with Chamelaion?
+## What can I use AI LipSync for?
 
-Chamelaion fits anywhere you need lip movements to match new audio:
+AI lip sync fits anywhere you need lip movements to match new audio:
 
-- **Video dubbing & localization:** Dub films, YouTube videos, and social content for global audiences with AI lip sync that looks native.
-- **E-learning & training:** Localize course videos into dozens of languages while keeping the instructor's face natural and in sync.
-- **Marketing & personalized outreach:** Generate personalized video messages at scale. One recording becomes thousands of tailored videos.
-- **Entertainment, media & gaming:** Power in-game characters, animated content, and post-production dubbing with lip sync technology that runs on API calls.
+- **Video translation / dubbing:** Translate videos into multiple languages with natural, lip-synced results.
+- **AI Avatars:** Make content always feel authentic. Enable avatars to speak with realistic, lip-synced articulation.
+- **UGC & Creative Ads:** Adapt and scale UGC and ad creative videos by changing messaging inside existing videos - without re-recording.
+- **Dialogue Replacement & Personalization:** Replace words or full lines in finished videos without re-shooting.
 
 ## How do I get started?
 
@@ -46,12 +46,12 @@ Get from zero to your first AI lip sync generation in three steps:
 3. **Generate your first lip sync:** Follow the [Quickstart](/guides/quickstart) to generate a synced video in minutes.
 
 <Callout variant="info">
-  Chamelaion processes generation requests asynchronously. After submitting a job, you'll receive a `request_id` that you can use to [poll for the result](/guides/polling-status).
+  CHAMELAION processes generation requests asynchronously. After submitting a job, you'll receive a `request_id` that you can use to [poll for the result](/guides/polling-status).
 </Callout>
 
 ## API endpoints overview
 
-Chamelaion exposes a focused set of endpoints:
+CHAMELAION exposes a focused set of endpoints:
 
 | Endpoint                          | Method | Description                                      |
 | :-------------------------------- | :----- | :----------------------------------------------- |
@@ -66,9 +66,9 @@ Chamelaion exposes a focused set of endpoints:
 
 <Accordion.Group>
   <Accordion>
-    <Accordion.Summary>What video and audio formats does Chamelaion support?</Accordion.Summary>
+    <Accordion.Summary>What video and audio formats does CHAMELAION support?</Accordion.Summary>
 
-    Chamelaion accepts common video formats like **MP4** for video input and **WAV** or **MP3** for audio input. You can provide media via publicly accessible URLs or upload files directly through the multipart form-data endpoint.
+    CHAMELAION accepts common video formats like **MP4** for video input and **WAV** or **MP3** for audio input. You can provide media via publicly accessible URLs or upload files directly through the multipart form-data endpoint.
 
   </Accordion>
   <Accordion>
@@ -78,15 +78,15 @@ Chamelaion exposes a focused set of endpoints:
 
   </Accordion>
   <Accordion>
-    <Accordion.Summary>Can Chamelaion handle multi-person videos?</Accordion.Summary>
+    <Accordion.Summary>Can CHAMELAION handle multi-person videos?</Accordion.Summary>
 
-    Yes. Chamelaion includes **active speaker detection** that automatically identifies and syncs the speaking person in multi-face videos. For single-speaker videos, you can disable this feature by setting `disable_active_speaker_detection: true` for faster processing.
+    Yes. CHAMELAION includes **active speaker detection** that automatically identifies and syncs the speaking person in multi-face videos. For single-speaker videos, you can disable this feature by setting `disable_active_speaker_detection: true` for faster processing.
 
   </Accordion>
   <Accordion>
     <Accordion.Summary>How does authentication work?</Accordion.Summary>
 
-    Chamelaion supports two authentication methods: a **Bearer token** in the `Authorization` header or an **API key** in the `x-api-key` header. Both use the same API token from your dashboard. See the [Authentication guide](/guides/authentication) for details.
+    CHAMELAION supports two authentication methods: a **Bearer token** in the `Authorization` header or an **API key** in the `x-api-key` header. Both use the same API token from your dashboard. See the [Authentication guide](/guides/authentication) for details.
 
   </Accordion>
   <Accordion>

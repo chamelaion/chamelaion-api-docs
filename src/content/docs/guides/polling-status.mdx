@@ -5,7 +5,7 @@ description: How to check the status of lip sync jobs and list your generation h
 
 import { Callout } from "@stainless-api/docs/components";
 
-Chamelaion processes lip sync jobs asynchronously. After submitting a generation request, you'll receive a `request_id` that you use to poll for the result. This guide covers how to check individual request status and list your generation history.
+CHAMELAION processes lip sync jobs asynchronously. After submitting a generation request, you'll receive a `request_id` that you use to poll for the result. This guide covers how to check individual request status and list your generation history.
 
 ## Request lifecycle
 
@@ -20,7 +20,7 @@ Every lip sync request goes through these stages:
 
 ## Get a single request
 
-Use `GET /v1/lipsync/requests/{id}` to check the status of a specific request. You can pass either the Chamelaion UUID or your own `reference_id`.
+Use `GET /v1/lipsync/requests/{id}` to check the status of a specific request. You can pass either the CHAMELAION UUID or your own `reference_id`.
 
 ### By request ID
 
@@ -242,7 +242,7 @@ def list_all_requests():
 
 | Field           | Type     | Present              | Description                                |
 | :-------------- | :------- | :------------------- | :----------------------------------------- |
-| `id`            | string   | Always               | Chamelaion request UUID                     |
+| `id`            | string   | Always               | CHAMELAION request UUID                     |
 | `reference_id`  | string   | If provided at creation | Your custom identifier                   |
 | `status`        | string   | Always               | Current status (`queued`, `processing`, `completed`, `failed`) |
 | `created_at`    | datetime | Always               | When the request was created (UTC)          |

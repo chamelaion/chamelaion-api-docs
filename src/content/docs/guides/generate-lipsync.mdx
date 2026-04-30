@@ -5,7 +5,7 @@ description: Learn how to generate AI lip sync videos using URLs or direct file 
 
 import { Callout, Accordion } from "@stainless-api/docs/components";
 
-Chamelaion provides two endpoints for generating lip sync videos: one accepts media URLs and another accepts direct file uploads. Both create an asynchronous job and return a `request_id` for tracking.
+CHAMELAION provides two endpoints for generating lip sync videos: one accepts media URLs and another accepts direct file uploads. Both create an asynchronous job and return a `request_id` for tracking.
 
 ## Option 1: Generate from URLs
 
@@ -196,7 +196,7 @@ The response format is identical to the URL-based endpoint.
 
 ## Active speaker detection
 
-Active speaker detection (ASD) decides which visible face is currently speaking before applying lip sync. When ASD is enabled, Chamelaion analyzes the video and audio together, chooses the active speaker, and syncs only that person's mouth. This is the default behavior.
+Active speaker detection (ASD) decides which visible face is currently speaking before applying lip sync. When ASD is enabled, CHAMELAION analyzes the video and audio together, chooses the active speaker, and syncs only that person's mouth. This is the default behavior.
 
 ASD is useful for:
 
@@ -227,7 +227,7 @@ Omit `disable_active_speaker_detection` or set it to `false` to use ASD. This ex
 
 ### Example without active speaker detection
 
-Set `disable_active_speaker_detection` to `true` to skip ASD and use max-face mode instead. In max-face mode, Chamelaion syncs the largest detected face in the video. This can be faster and works well for simple single-speaker videos where the main face is clearly the target.
+Set `disable_active_speaker_detection` to `true` to skip ASD and use max-face mode instead. In max-face mode, CHAMELAION syncs the largest detected face in the video. This can be faster and works well for simple single-speaker videos where the main face is clearly the target.
 
 ```json
 {
@@ -255,8 +255,8 @@ Set `disable_active_speaker_detection` to `true` to skip ASD and use max-face mo
 
 The `reference_id` field lets you tag requests with your own identifiers. This is useful for:
 
-- Linking Chamelaion requests to your internal database records
-- Retrieving requests by your own ID instead of the Chamelaion UUID
+- Linking CHAMELAION requests to your internal database records
+- Retrieving requests by your own ID instead of the CHAMELAION UUID
 - Batch tracking and reporting
 
 ```json
