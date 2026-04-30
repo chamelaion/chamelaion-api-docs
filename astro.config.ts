@@ -188,7 +188,7 @@ export default defineConfig({
           },
           {
             label: "Get API Key",
-            link: "https://app.chamelaion.com/settings/api-keys",
+            link: "https://app.chamelaion.com/settings",
           },
         ],
       },
