@@ -1,0 +1,1457 @@
+openapi: 3.1.0
+info:
+  title: CHAMELAION API Reference
+  description: API for the CHAMELAION SDK.
+  version: 1.0.0
+  license:
+    name: Proprietary
+    url: https://www.chamelaion.com/terms
+
+servers:
+  - url: https://api.chamelaion.com/api
+    description: Production
+
+tags:
+  - name: Health
+    description: Service health endpoint.
+  - name: Users
+    description: Endpoints for API token identity.
+  - name: LipSync
+    description: Endpoints for creating and retrieving lip sync requests.
+  - name: VideoTranslate
+    description: Endpoints for creating and polling asynchronous video translations.
+
+security:
+  - bearerAuth: []
+  - apiKey: []
+
+paths:
+  /health:
+    get:
+      summary: Health check
+      description: Returns HTTP 200 when the service is running. No authentication required.
+      operationId: isHealthy
+      tags:
+        - Health
+      security: []
+      responses:
+        "200":
+          description: Service is healthy.
+          content:
+            application/json:
+              schema:
+                type: object
+                required:
+                  - status
+                properties:
+                  status:
+                    type: string
+                    enum:
+                      - ok
+                additionalProperties: false
+              examples:
+                healthy:
+                  value:
+                    status: ok
+
+  /v1/users/me:
+    get:
+      summary: Get current user
+      description: Returns the identity associated with the authenticated API token.
+      operationId: getUsersMe
+      tags:
+        - Users
+      responses:
+        "200":
+          description: Token identity returned successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/UserMe"
+              examples:
+                default:
+                  value:
+                    name: My API Token
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/lipsync/generate:
+    post:
+      summary: Generate lip sync from URLs
+      description: |
+        Starts a lip sync job from exactly one remote video URL and one remote audio URL.
+        The response includes a request identifier to poll later.
+      operationId: lipsyncGenerate
+      tags:
+        - LipSync
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LipsyncGenerateRequest"
+            examples:
+              basic_generation:
+                value:
+                  reference_id: normal-lipsync-demo
+                  disable_active_speaker_detection: false
+                  inputs:
+                    - type: video
+                      url: https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4
+                    - type: audio
+                      url: https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav
+              max_face_mode:
+                value:
+                  reference_id: without-asd-demo
+                  disable_active_speaker_detection: true
+                  inputs:
+                    - type: video
+                      url: https://storage.googleapis.com/chamelaion-test-media/Example_Video.mp4
+                    - type: audio
+                      url: https://storage.googleapis.com/chamelaion-test-media/Example_Audio.wav
+      responses:
+        "200":
+          description: Lip sync request created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LipsyncGenerateResponse"
+              examples:
+                accepted:
+                  value:
+                    status: success
+                    request_id: 6f82a2d8-a6d4-4e8a-a0fa-e8b09823a2d8
+        "400":
+          $ref: "#/components/responses/BadRequestGenerateLipsync"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "412":
+          $ref: "#/components/responses/TokenLimitReachedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/lipsync/generate-with-media:
+    post:
+      summary: Generate lip sync from uploaded media
+      description: Starts a lip sync job by uploading one video file and one audio file as multipart form-data.
+      operationId: lipsyncGenerateWithMedia
+      tags:
+        - LipSync
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/LipsyncGenerateWithMediaRequest"
+            examples:
+              direct_upload:
+                value:
+                  video: "(binary)"
+                  audio: "(binary)"
+                  reference_id: upload-demo-01
+                  disable_active_speaker_detection: false
+      responses:
+        "200":
+          description: Lip sync request created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LipsyncGenerateResponse"
+              examples:
+                accepted:
+                  value:
+                    status: success
+                    request_id: 3b7df3e8-f578-44de-b4f5-5f58dd6b89e0
+        "400":
+          $ref: "#/components/responses/BadRequestGenerateWithMedia"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "412":
+          $ref: "#/components/responses/TokenLimitReachedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/lipsync/requests/{id}:
+    get:
+      summary: Get lip sync request
+      description: Returns a single lip sync request by request UUID or `reference_id`.
+      operationId: getLipsyncRequest
+      tags:
+        - LipSync
+      parameters:
+        - $ref: "#/components/parameters/LipsyncRequestId"
+      responses:
+        "200":
+          description: Lip sync request returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LipsyncRequestResponse"
+              examples:
+                completed:
+                  value:
+                    id: 6f82a2d8-a6d4-4e8a-a0fa-e8b09823a2d8
+                    reference_id: dub-episode-42
+                    status: completed
+                    created_at: 2026-04-07T10:00:00Z
+                    started_at: 2026-04-07T10:00:05Z
+                    finished_at: 2026-04-07T10:01:30Z
+                    output_url: https://storage.chamelaion.com/output/6f82a2d8.mp4
+                failed:
+                  value:
+                    id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                    reference_id: dub-episode-43
+                    status: failed
+                    created_at: 2026-04-07T11:00:00Z
+                    started_at: 2026-04-07T11:00:04Z
+                    finished_at: 2026-04-07T11:00:12Z
+                    error_message: video URL is not accessible
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          $ref: "#/components/responses/LipsyncRequestNotFound"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/lipsync/requests:
+    get:
+      summary: List lip sync requests
+      description: Returns a paginated list of lip sync requests for the authenticated account.
+      operationId: listLipsyncRequests
+      tags:
+        - LipSync
+      parameters:
+        - $ref: "#/components/parameters/Limit"
+        - $ref: "#/components/parameters/Offset"
+        - $ref: "#/components/parameters/ReferenceId"
+      responses:
+        "200":
+          description: Lip sync requests returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LipsyncListResponse"
+              examples:
+                mixed_statuses:
+                  value:
+                    data:
+                      - id: 6f82a2d8-a6d4-4e8a-a0fa-e8b09823a2d8
+                        reference_id: batch-2026-04
+                        status: completed
+                        created_at: 2026-03-30T11:00:00Z
+                        started_at: 2026-03-30T11:00:04Z
+                        finished_at: 2026-03-30T11:01:09Z
+                        output_url: https://storage.chamelaion.com/output/6f82a2d8.mp4
+                      - id: a1b2c3d4-e5f6-7890-abcd-ef1234567890
+                        reference_id: batch-2026-04
+                        status: queued
+                        created_at: 2026-03-30T11:02:00Z
+                    pagination:
+                      limit: 20
+                      offset: 0
+                      total: 2
+                filtered_by_reference_id:
+                  value:
+                    data:
+                      - id: 0d8e7a7b-1a4a-4af1-b1da-050f7d9d95bc
+                        reference_id: order-12345-japanese-dub
+                        status: processing
+                        created_at: 2026-03-31T09:40:00Z
+                        started_at: 2026-03-31T09:40:08Z
+                    pagination:
+                      limit: 20
+                      offset: 0
+                      total: 1
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/video-translate/generate:
+    post:
+      summary: Translate a remote video
+      description: |
+        Validates a remote video and starts an asynchronous translation request.
+
+        Optional `config.source_srt` / `config.target_srts` supply subtitles and
+        `config.speaker_voices` assigns voices to speakers (see `VideoTranslateConfig`).
+        When `webhook_url` is supplied, the service sends one JSON `POST` after the
+        request reaches `completed` or `failed`. The event type is
+        `video_translate.completed` or `video_translate.failed`; the request body uses
+        `{id, type, created_at, data}` and `data` mirrors the public request response
+        without `webhook_url`. Successful events include freshly signed video, audio and
+        SRT URLs. Receivers should deduplicate on `X-Chamelaion-Delivery`. Transport
+        failures, HTTP 429 and HTTP 5xx are retried up to three times with the same
+        delivery ID; redirects and other non-2xx responses are not accepted.
+        Validation happens in two phases:
+
+        1. **Synchronous (HTTP 400, no request is created):** request shape, config types,
+           SRT size, UTF-8 encoding and syntax (optional BOM stripped, CRLF/CR normalized
+           to LF), cue limit, language consistency, `target_srts` keys must be listed in
+           `target_languages`, speaker ID syntax, and voice availability (every
+           `speaker_voices` value must be a `voice_id` returned by
+           `GET /v1/video-translate/voices`).
+        2. **After the video is processed, before translation starts:** SRT timing against
+           the video duration (+1.2 s tolerance), source/target cue count and speaker
+           compatibility, the detected source language against `source_srt.language`, and
+           `speaker_voices` keys against the speakers in the source subtitles (or, without
+           any SRT, the speakers already stored for the media). Failures mark the request
+           `failed` with a descriptive `error_message`; no translation is started.
+
+        Limits: JSON body 8 MiB; each SRT 1 MiB; all SRTs 5 MiB; 5000 cues per SRT;
+        32 `speaker_voices` entries; config keys other than `source_srt`, `target_srts`
+        and `speaker_voices` 64 KiB in total; normalized config 6 MiB (measured without
+        HTML escaping). Duplicate JSON keys anywhere in the body and NUL characters in
+        config are rejected.
+      operationId: videoTranslateGenerate
+      tags: [VideoTranslate]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VideoTranslateGenerateRequest"
+            example:
+              reference_id: customer-job-42
+              webhook_url: https://hooks.example.com/chamelaion/video-translate
+              source_language: en
+              target_languages: [de, fr]
+              disable_background_audio: false
+              disable_lip_sync: false
+              formality: false
+              config:
+                source_srt:
+                  file_name: interview.srt
+                  content: "1\n00:00:00,000 --> 00:00:02,500\nSpeaker 0: Welcome back.\n\n2\n00:00:02,600 --> 00:00:05,000\nSpeaker 1: Thanks for having me.\n"
+                target_srts:
+                  de:
+                    content: "1\n00:00:00,000 --> 00:00:02,500\nSpeaker 0: Willkommen zurück.\n\n2\n00:00:02,600 --> 00:00:05,000\nSpeaker 1: Danke für die Einladung.\n"
+                speaker_voices:
+                  "0": 21m00Tcm4TlvDq8ikWAM
+                  "1": AZnzlk1XvdvUeBnXmlld
+              inputs:
+                - type: video
+                  url: https://example.com/input.mp4
+      responses:
+        "200":
+          $ref: "#/components/responses/VideoTranslateAccepted"
+        "400":
+          $ref: "#/components/responses/VideoTranslateBadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "413":
+          description: JSON request body exceeds 8 MiB.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: request body exceeds the 8 MiB limit
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/video-translate/generate-with-media:
+    post:
+      summary: Translate an uploaded video
+      description: |
+        Stages one bounded video upload and starts an asynchronous translation request.
+        Accepts the same settings as `POST /v1/video-translate/generate` as form fields.
+        Subtitles may be sent inline in the `config` field or as native file parts
+        `source_srt` and `target_srt.<language>` (for example `target_srt.de`); sending the
+        same subtitle both ways is rejected. Parts may arrive in any order; validation that
+        needs every field runs after the whole body is read but before a request is created,
+        and the staged video is discarded on every failure. Both transports produce the same
+        normalized, persisted config.
+
+        Limits: video 2 GiB; whole body 2 GiB + 9 MiB; part names 64 bytes; `config` field
+        6 MiB; other text fields 64 KiB; at most 11 SRT parts (one source plus one per
+        allowed target language); each SRT part 1 MiB (rejected, never truncated); all SRTs
+        5 MiB. `target_srt.<language>` must name a supported language; invalid names are
+        rejected before the part is read.
+      operationId: videoTranslateGenerateWithMedia
+      tags: [VideoTranslate]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/VideoTranslateGenerateWithMediaRequest"
+            encoding:
+              source_srt:
+                contentType: application/x-subrip, application/srt, text/srt, text/plain, application/octet-stream
+      responses:
+        "200":
+          $ref: "#/components/responses/VideoTranslateAccepted"
+        "400":
+          $ref: "#/components/responses/VideoTranslateBadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "408":
+          description: Multipart request body exceeded the 30-second idle timeout.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "413":
+          description: Multipart request exceeds the size limit (2 GiB video plus 9 MiB for form fields, config and SRT files).
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              example:
+                error: multipart request exceeds the size limit (2 GiB video plus 9 MiB for form fields, config and SRT files)
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/video-translate/requests/{id}:
+    get:
+      summary: Get a video translation request
+      description: Returns an account-owned request by UUID or exact reference ID (requests of other accounts return 404). Completed artifact URLs are freshly signed on every read; SRT content is never returned.
+      operationId: getVideoTranslateRequest
+      tags: [VideoTranslate]
+      parameters:
+        - $ref: "#/components/parameters/VideoTranslateRequestId"
+      responses:
+        "200":
+          description: Video translation request returned.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoTranslateRequestResponse"
+              examples:
+                completed:
+                  value:
+                    id: 4c98dd00-a982-47d9-a8d6-e1f0b35a8944
+                    reference_id: customer-job-42
+                    source_language: en
+                    target_languages: [de, fr]
+                    disable_background_audio: false
+                    disable_lip_sync: false
+                    formality: false
+                    config:
+                      source_srt:
+                        file_name: interview.srt
+                        language: en
+                        supplied: true
+                      target_srts:
+                        de:
+                          file_name: target-de.srt
+                          language: de
+                          supplied: true
+                      speaker_voices:
+                        "0": 21m00Tcm4TlvDq8ikWAM
+                        "1": AZnzlk1XvdvUeBnXmlld
+                    status: completed
+                    created_at: 2026-10-07T12:00:00Z
+                    started_at: 2026-10-07T12:00:01Z
+                    finished_at: 2026-10-07T12:04:00Z
+                    outputs:
+                      de:
+                        video: https://storage.example/signed/de.mp4
+                        audio: https://storage.example/signed/de.wav
+                        srt: https://storage.example/signed/de.srt
+                      fr:
+                        video: https://storage.example/signed/fr.mp4
+                        audio: https://storage.example/signed/fr.wav
+                        srt: https://storage.example/signed/fr.srt
+                failed_validation:
+                  value:
+                    id: 9d2b8c7e-0b5f-4f3e-9a51-2a9e3f1c5b77
+                    target_languages: [de]
+                    source_language: en
+                    disable_background_audio: false
+                    disable_lip_sync: false
+                    formality: false
+                    config:
+                      speaker_voices:
+                        "7": 21m00Tcm4TlvDq8ikWAM
+                    status: failed
+                    created_at: 2026-10-07T12:00:00Z
+                    started_at: 2026-10-07T12:00:01Z
+                    finished_at: 2026-10-07T12:01:10Z
+                    error_message: "speaker_voices references speakers that are not in the source subtitles: 7 (source speakers: 0, 1)"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "404":
+          description: Video translation request was not found for the authenticated account.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/video-translate/requests:
+    get:
+      summary: List video translation requests
+      description: Returns the authenticated account's requests, newest first (`created_at` descending, then `id` descending), always paginated. `pagination.total` counts every request matching the filters. Responses use the same shape as `GET /v1/video-translate/requests/{id}`.
+      operationId: listVideoTranslateRequests
+      tags: [VideoTranslate]
+      parameters:
+        - $ref: "#/components/parameters/VideoTranslateListLimit"
+        - $ref: "#/components/parameters/VideoTranslateOffset"
+        - $ref: "#/components/parameters/ReferenceId"
+        - $ref: "#/components/parameters/VideoTranslateStatus"
+        - $ref: "#/components/parameters/VideoTranslateSourceLanguage"
+        - $ref: "#/components/parameters/VideoTranslateTargetLanguage"
+        - $ref: "#/components/parameters/CreatedFrom"
+        - $ref: "#/components/parameters/CreatedTo"
+      responses:
+        "200":
+          description: Paginated account-owned requests. `data` is an empty array when nothing matches.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoTranslateListResponse"
+        "400":
+          $ref: "#/components/responses/VideoTranslateListBadRequest"
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+  /v1/video-translate/voices:
+    get:
+      summary: List voices for speaker assignment
+      description: |
+        Lists the voices that can be used as values in `config.speaker_voices`.
+        `voice_id` is the external voice ID to submit. `name` and `is_favorite` reflect the
+        authenticated account's personalization; `default_name` is the catalog name.
+        Ordered by favorites first, then `name` (case-insensitive), then `voice_id`.
+      operationId: listVideoTranslateVoices
+      tags: [VideoTranslate]
+      parameters:
+        - $ref: "#/components/parameters/VoiceListLimit"
+        - $ref: "#/components/parameters/VideoTranslateOffset"
+        - $ref: "#/components/parameters/VoiceLanguage"
+        - $ref: "#/components/parameters/VoiceGender"
+        - $ref: "#/components/parameters/VoiceApplication"
+        - $ref: "#/components/parameters/VoiceSearch"
+        - $ref: "#/components/parameters/VoiceFavorite"
+      responses:
+        "200":
+          description: Paginated available voices. `voices` is an empty array when nothing matches.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/VideoTranslateVoicesResponse"
+              example:
+                voices:
+                  - voice_id: 21m00Tcm4TlvDq8ikWAM
+                    name: Rachel (narration)
+                    default_name: Rachel
+                    description: Calm, young adult female voice.
+                    language: en
+                    application: narration
+                    gender: Female
+                    is_favorite: true
+                pagination:
+                  limit: 50
+                  offset: 0
+                  total: 1
+        "400":
+          description: Invalid query parameter.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                gender:
+                  value:
+                    error: gender must be one of Male, Female, Other
+                favorite:
+                  value:
+                    error: favorite must be true or false
+        "401":
+          $ref: "#/components/responses/UnauthorizedError"
+        "429":
+          $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalServerError"
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: API Token
+      description: "API token sent as `Authorization: Bearer <token>`."
+    apiKey:
+      type: apiKey
+      in: header
+      name: x-api-key
+      description: API token sent as `x-api-key`.
+
+  parameters:
+    LipsyncRequestId:
+      name: id
+      in: path
+      required: true
+      description: UUID or `reference_id` of the lip sync request.
+      schema:
+        type: string
+        minLength: 1
+        examples:
+          - 6f82a2d8-a6d4-4e8a-a0fa-e8b09823a2d8
+          - order-12345-japanese-dub
+    VideoTranslateRequestId:
+      name: id
+      in: path
+      required: true
+      description: UUID or `reference_id` of a video translation request.
+      schema:
+        type: string
+        minLength: 1
+    Limit:
+      name: limit
+      in: query
+      required: false
+      description: Maximum number of items to return.
+      schema:
+        type: integer
+        minimum: 1
+        default: 20
+        example: 20
+    Offset:
+      name: offset
+      in: query
+      required: false
+      description: Number of items to skip before returning results.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+        example: 0
+    ReferenceId:
+      name: reference_id
+      in: query
+      required: false
+      description: Filter requests by exact `reference_id`.
+      schema:
+        type: string
+        example: batch-2026-04
+    VideoTranslateListLimit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. Non-integers and values below 1 are rejected with 400; values above 100 are clamped to 100.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 20
+    VideoTranslateOffset:
+      name: offset
+      in: query
+      required: false
+      description: Number of items to skip. Non-integers and negative values are rejected with 400.
+      schema:
+        type: integer
+        minimum: 0
+        default: 0
+    VideoTranslateStatus:
+      name: status
+      in: query
+      required: false
+      description: Filter by request status.
+      schema:
+        type: string
+        enum: [queued, uploading, processing, completed, failed]
+    VideoTranslateSourceLanguage:
+      name: source_language
+      in: query
+      required: false
+      description: Filter by the explicit or detected source language (supported language code).
+      schema:
+        type: string
+        example: en
+    VideoTranslateTargetLanguage:
+      name: target_language
+      in: query
+      required: false
+      description: Return requests whose `target_languages` contain this supported language code.
+      schema:
+        type: string
+        example: de
+    CreatedFrom:
+      name: created_from
+      in: query
+      required: false
+      description: Inclusive lower bound on `created_at` (RFC 3339). Must not be after `created_to`.
+      schema:
+        type: string
+        format: date-time
+        example: 2026-10-01T00:00:00Z
+    CreatedTo:
+      name: created_to
+      in: query
+      required: false
+      description: Inclusive upper bound on `created_at` (RFC 3339).
+      schema:
+        type: string
+        format: date-time
+        example: 2026-10-08T23:59:59Z
+    VoiceListLimit:
+      name: limit
+      in: query
+      required: false
+      description: Page size. Non-integers and values below 1 are rejected with 400; values above 100 are clamped to 100.
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 50
+    VoiceLanguage:
+      name: language
+      in: query
+      required: false
+      description: Case-insensitive exact match on the voice's primary language or any of its verified languages (max 100 characters).
+      schema:
+        type: string
+        maxLength: 100
+        example: en
+    VoiceGender:
+      name: gender
+      in: query
+      required: false
+      description: Case-insensitive gender filter.
+      schema:
+        type: string
+        enum: [Male, Female, Other]
+    VoiceApplication:
+      name: application
+      in: query
+      required: false
+      description: Case-insensitive exact match on the voice's application (use case), for example `narration` (max 100 characters).
+      schema:
+        type: string
+        maxLength: 100
+    VoiceSearch:
+      name: search
+      in: query
+      required: false
+      description: Case-insensitive substring of the voice's effective (account-personalized) name.
+      schema:
+        type: string
+        maxLength: 100
+    VoiceFavorite:
+      name: favorite
+      in: query
+      required: false
+      description: Only favorites (`true`) or only non-favorites (`false`).
+      schema:
+        type: boolean
+
+  responses:
+    UnauthorizedError:
+      description: Unauthorized.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            missing_header:
+              value:
+                error: missing authorization header
+            invalid_format:
+              value:
+                error: invalid authorization format
+            missing_token:
+              value:
+                error: missing token
+            invalid_token:
+              value:
+                error: invalid token
+            generic_unauthorized:
+              value:
+                error: unauthorized
+
+    InternalServerError:
+      description: Internal server error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: internal error
+
+    RateLimitError:
+      description: Too many requests.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: rate limit exceeded
+
+    TokenLimitReachedError:
+      description: Token limit reached.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: token limit reached
+
+    BadRequestGenerateLipsync:
+      description: Bad request (invalid body, wrong content type, or media validation failure).
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            invalid_body:
+              value:
+                error: invalid request body
+            invalid_content_type:
+              value:
+                error: content-type must be application/json
+            missing_video:
+              value:
+                error: expected exactly one video input
+            missing_audio:
+              value:
+                error: expected exactly one audio input
+            invalid_input_type:
+              value:
+                error: input type must be "video" or "audio"
+
+    BadRequestGenerateWithMedia:
+      description: Bad request.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            invalid_content_type:
+              value:
+                error: content-type must be multipart/form-data
+            missing_video:
+              value:
+                error: video file is required
+            missing_audio:
+              value:
+                error: audio file is required
+
+    LipsyncRequestNotFound:
+      description: Lip sync request was not found.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: lipsync request not found
+
+    VideoTranslateAccepted:
+      description: Video translation request created.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/VideoTranslateGenerateResponse"
+          example:
+            status: success
+            request_id: 4c98dd00-a982-47d9-a8d6-e1f0b35a8944
+
+    VideoTranslateBadRequest:
+      description: Invalid settings, URL, media type, file, config, SRT, or speaker voice. No request is created.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            missing_targets:
+              value:
+                error: target_languages must contain at least one language
+            duplicate_target:
+              value:
+                error: duplicate target language "de"
+            invalid_video:
+              value:
+                error: input must be a video file
+            config_not_object:
+              value:
+                error: config must be a valid JSON object
+            invalid_srt:
+              value:
+                error: "config.source_srt is not a valid SRT file: Line 2: invalid time format, 00:00:01 --> 00:00:02, expecting in '00:00:04,139 --> 00:00:04,799' format"
+            srt_target_not_requested:
+              value:
+                error: 'config.target_srts.fr: language "fr" is not listed in target_languages'
+            srt_inline_and_file:
+              value:
+                error: source_srt must be supplied either in config or as a multipart file, not both
+            speaker_key:
+              value:
+                error: 'config.speaker_voices key "speaker-1" must be a non-negative integer speaker ID such as "1"'
+            unknown_voice:
+              value:
+                error: 'speaker_voices references unknown or unavailable voice IDs: "missing-voice"'
+
+    VideoTranslateListBadRequest:
+      description: Invalid query parameter.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            limit:
+              value:
+                error: limit must be an integer between 1 and 100
+            status:
+              value:
+                error: status must be one of queued, uploading, processing, completed, failed
+            range:
+              value:
+                error: created_from must not be after created_to
+
+  schemas:
+    UserMe:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          description: Display name of the API token.
+      additionalProperties: false
+
+    LipsyncGenerateRequest:
+      type: object
+      required:
+        - inputs
+      properties:
+        reference_id:
+          type: string
+          description: Optional client-provided identifier for later retrieval.
+        disable_active_speaker_detection:
+          type: boolean
+          description: Disable active speaker detection and use max-face lipsync preprocessing.
+          default: false
+        inputs:
+          type: array
+          minItems: 2
+          maxItems: 2
+          description: Exactly one video input and one audio input (order does not matter).
+          items:
+            $ref: "#/components/schemas/LipsyncInput"
+      additionalProperties: false
+
+    LipsyncGenerateWithMediaRequest:
+      type: object
+      required:
+        - video
+        - audio
+      properties:
+        video:
+          type: string
+          format: binary
+          description: Source video file.
+        audio:
+          type: string
+          format: binary
+          description: Target audio file.
+        reference_id:
+          type: string
+          description: Optional client-provided identifier for later retrieval.
+        disable_active_speaker_detection:
+          type: boolean
+          default: false
+          description: Disable active speaker detection and use max-face lipsync preprocessing.
+      additionalProperties: false
+
+    LipsyncInput:
+      type: object
+      required:
+        - type
+        - url
+      properties:
+        type:
+          type: string
+          enum:
+            - video
+            - audio
+          description: Type of input media.
+        url:
+          type: string
+          format: uri
+          description: URL of the media resource.
+      additionalProperties: false
+
+    LipsyncGenerateResponse:
+      type: object
+      required:
+        - status
+        - request_id
+      properties:
+        status:
+          type: string
+          enum:
+            - success
+          description: Current state of the newly created request.
+          example: success
+        request_id:
+          type: string
+          format: uuid
+          description: Identifier of the created lip sync request.
+      additionalProperties: false
+
+    LipsyncRequestResponse:
+      type: object
+      required:
+        - id
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Lip sync request ID.
+        reference_id:
+          type: string
+          description: Client-provided identifier for this request.
+        status:
+          type: string
+          description: Current request status.
+          examples:
+            - queued
+            - failed
+        created_at:
+          type: string
+          format: date-time
+          description: Request creation time in UTC.
+        started_at:
+          type: string
+          format: date-time
+          description: Request processing start time in UTC.
+        finished_at:
+          type: string
+          format: date-time
+          description: Request processing completion time in UTC.
+        output_url:
+          type: string
+          format: uri
+          description: URL to the generated output media, when available.
+        error_message:
+          type: string
+          description: Failure message when status is `failed`.
+      additionalProperties: false
+
+    LipsyncListResponse:
+      type: object
+      required:
+        - data
+        - pagination
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/LipsyncRequestResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+      additionalProperties: false
+
+    VideoTranslateGenerateRequest:
+      type: object
+      required: [target_languages, inputs]
+      properties:
+        reference_id:
+          type: string
+          maxLength: 255
+        webhook_url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: |
+            Optional HTTPS callback URL for terminal status. It must have a public host,
+            contain no credentials or fragment, and redirects are not followed. The POST
+            has `Content-Type: application/json`, `X-Chamelaion-Event` and
+            `X-Chamelaion-Delivery` headers.
+        source_language:
+          type: string
+          description: Optional supported source language code; detected when omitted.
+          example: en
+        target_languages:
+          type: array
+          minItems: 1
+          maxItems: 10
+          uniqueItems: true
+          items:
+            type: string
+          example: [de, fr]
+        disable_background_audio:
+          type: boolean
+          default: false
+          description: Defaults to false when omitted; set to true to disable background audio.
+        disable_lip_sync:
+          type: boolean
+          default: false
+          description: Defaults to false when omitted; set to true to disable lip sync.
+        formality:
+          type: boolean
+          default: false
+        config:
+          $ref: "#/components/schemas/VideoTranslateConfig"
+        inputs:
+          type: array
+          minItems: 1
+          maxItems: 1
+          items:
+            $ref: "#/components/schemas/VideoTranslateInput"
+      additionalProperties: false
+
+    VideoTranslateConfig:
+      type: object
+      default: {}
+      description: |
+        Request config. `source_srt`, `target_srts` and `speaker_voices` are validated and
+        consumed by the translation; every other key is stored as sent (at most 64 KiB in
+        total, no NUL characters) and returned in responses. Duplicate keys at any depth are
+        rejected. Numbers are stored exactly, but responses decode them as IEEE-754
+        doubles, so integers beyond 2^53 may lose precision when read back.
+        Without SRTs and voices, translation behaves exactly as before (transcription and
+        speaker detection are automatic).
+      properties:
+        source_srt:
+          $ref: "#/components/schemas/VideoTranslateSRTInput"
+        target_srts:
+          type: object
+          description: |
+            Target-language subtitles keyed by language code (trimmed, case-insensitive; keys
+            must be unique after normalization and listed in `target_languages`). Target
+            languages without an entry are translated automatically. Each target must have the
+            same cue count and speakers as the effective source subtitles (the supplied
+            `source_srt`, or the segments stored for the processed video).
+          additionalProperties:
+            $ref: "#/components/schemas/VideoTranslateSRTInput"
+          example:
+            de:
+              content: "1\n00:00:00,000 --> 00:00:02,500\nSpeaker 0: Willkommen zurück.\n"
+        speaker_voices:
+          type: object
+          description: |
+            Voice per speaker. Keys are base-10, non-negative integer speaker IDs as used in
+            the SRT cues (`"1"` for `Speaker 1: ...`); names such as `"speaker-1"`, signs,
+            whitespace or hexadecimal are rejected, and keys that collide after normalization
+            (`"01"` and `"1"`) are rejected. Keys are returned in canonical form. Values are
+            external voice IDs (`voice_id` from `GET /v1/video-translate/voices`); unknown or
+            deleted voices are rejected. Every key must be a speaker of the source subtitles;
+            without any SRT, keys are checked against the speakers already detected for the
+            video, and the request fails if none are known yet.
+          maxProperties: 32
+          propertyNames:
+            pattern: "^[0-9]+$"
+          additionalProperties:
+            type: string
+            pattern: "^[A-Za-z0-9_-]{1,64}$"
+          example:
+            "0": 21m00Tcm4TlvDq8ikWAM
+            "1": AZnzlk1XvdvUeBnXmlld
+      additionalProperties: true
+
+    VideoTranslateSRTInput:
+      type: object
+      required: [content]
+      description: |
+        One SRT document. Each cue is an index (1, 2, ...), a timing line
+        `HH:MM:SS,mmm --> HH:MM:SS,mmm`, and text formatted `Speaker N: text`.
+        UTF-8 only (an optional BOM is stripped; CRLF/CR line endings are normalized to LF).
+        At most 1 MiB and 5000 cues per document and 5 MiB across all documents.
+      properties:
+        file_name:
+          type: string
+          maxLength: 255
+          pattern: "(?i)\\.srt$"
+          description: Display name without path separators or control characters. Defaults to `source-<language>.srt` (`source-source.srt` when the source language is not yet known) or `target-<language>.srt`.
+        language:
+          type: string
+          description: For `source_srt`, must equal `source_language` when that is given, and the detected language otherwise; taken from it when omitted. For `target_srts`, must equal the key when given.
+        content:
+          type: string
+          minLength: 1
+      additionalProperties: false
+
+    VideoTranslateGenerateWithMediaRequest:
+      type: object
+      required: [video, target_languages]
+      properties:
+        video:
+          type: string
+          format: binary
+        reference_id:
+          type: string
+          maxLength: 255
+        webhook_url:
+          type: string
+          format: uri
+          maxLength: 2048
+          description: Same terminal callback contract as `VideoTranslateGenerateRequest.webhook_url`.
+        source_language:
+          type: string
+        target_languages:
+          description: JSON array (for example `["de","fr"]`) or comma-separated value (`de,fr`).
+          oneOf:
+            - type: string
+            - type: array
+              minItems: 1
+              maxItems: 10
+              uniqueItems: true
+              items:
+                type: string
+        disable_background_audio:
+          type: boolean
+          default: false
+          description: Defaults to false when omitted; set to true to disable background audio.
+        disable_lip_sync:
+          type: boolean
+          default: false
+          description: Defaults to false when omitted; set to true to disable lip sync.
+        formality:
+          type: boolean
+          default: false
+        config:
+          type: string
+          maxLength: 6291456
+          description: JSON-encoded `VideoTranslateConfig` object (at most 6 MiB). SRTs may be inline here or sent as the file parts below, but not both. Resource references such as `csv_resources` contain metadata only; do not send CSV bytes or base64.
+          example: '{"speaker_voices":{"0":"21m00Tcm4TlvDq8ikWAM","1":"AZnzlk1XvdvUeBnXmlld"}}'
+        source_srt:
+          type: string
+          format: binary
+          description: Source-language SRT file part (filename must end in `.srt`; Content-Type empty, application/x-subrip, application/srt, text/srt, text/plain or application/octet-stream). Max 1 MiB.
+      patternProperties:
+        "^target_srt\\.[A-Za-z-]+$":
+          type: string
+          format: binary
+          description: Target-language SRT file part named `target_srt.<language>`, for example `target_srt.de`. Same rules as `source_srt`.
+      additionalProperties: false
+
+    VideoTranslateInput:
+      type: object
+      required: [type, url]
+      properties:
+        type:
+          type: string
+          const: video
+        url:
+          type: string
+          format: uri
+      additionalProperties: false
+
+    VideoTranslateGenerateResponse:
+      type: object
+      required: [status, request_id]
+      properties:
+        status:
+          type: string
+          const: success
+        request_id:
+          type: string
+          format: uuid
+      additionalProperties: false
+
+    VideoTranslateArtifactSet:
+      type: object
+      required: [video, audio, srt]
+      properties:
+        video:
+          type: string
+          format: uri
+        audio:
+          type: string
+          format: uri
+        srt:
+          type: string
+          format: uri
+      additionalProperties: false
+
+    VideoTranslateSRTMetadata:
+      type: object
+      required: [supplied]
+      description: Public description of a supplied SRT. The subtitle content is never returned.
+      properties:
+        file_name:
+          type: string
+        language:
+          type: string
+        supplied:
+          type: boolean
+          const: true
+      additionalProperties: false
+
+    VideoTranslatePublicConfig:
+      type: object
+      description: The request config as returned by the API. SRT content is replaced by metadata, `speaker_voices` keys are canonical speaker IDs, and other keys are returned unchanged.
+      properties:
+        source_srt:
+          $ref: "#/components/schemas/VideoTranslateSRTMetadata"
+        target_srts:
+          type: object
+          additionalProperties:
+            $ref: "#/components/schemas/VideoTranslateSRTMetadata"
+        speaker_voices:
+          type: object
+          additionalProperties:
+            type: string
+      additionalProperties: true
+
+    VideoTranslateRequestResponse:
+      type: object
+      required:
+        - id
+        - target_languages
+        - disable_background_audio
+        - disable_lip_sync
+        - formality
+        - config
+        - status
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        reference_id:
+          type: string
+        webhook_url:
+          type: string
+          format: uri
+          description: The configured terminal callback URL, when supplied.
+        source_language:
+          type: string
+          description: Explicit source language, or the detected one once processing starts.
+        target_languages:
+          type: array
+          items:
+            type: string
+        disable_background_audio:
+          type: boolean
+          description: Whether background audio was disabled for this request.
+        disable_lip_sync:
+          type: boolean
+          description: Whether lip sync was disabled for this request.
+        formality:
+          type: boolean
+        config:
+          $ref: "#/components/schemas/VideoTranslatePublicConfig"
+        status:
+          type: string
+          enum: [queued, uploading, processing, completed, failed]
+        created_at:
+          type: string
+          format: date-time
+        started_at:
+          type: string
+          format: date-time
+        finished_at:
+          type: string
+          format: date-time
+        outputs:
+          type: object
+          description: Present only when completed, keyed by requested target language. URLs are signed on every read.
+          additionalProperties:
+            $ref: "#/components/schemas/VideoTranslateArtifactSet"
+        error_message:
+          type: string
+          maxLength: 1001
+          description: Present only when failed. A safe, bounded description, for example SRT or speaker validation errors found after the video was processed.
+      additionalProperties: false
+
+    VideoTranslateListResponse:
+      type: object
+      required: [data, pagination]
+      properties:
+        data:
+          type: array
+          items:
+            $ref: "#/components/schemas/VideoTranslateRequestResponse"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+      additionalProperties: false
+
+    VideoTranslateVoice:
+      type: object
+      required: [voice_id, name, default_name, description, language, application, gender, is_favorite]
+      properties:
+        voice_id:
+          type: string
+          description: External voice ID. Use this value in `config.speaker_voices`.
+          example: 21m00Tcm4TlvDq8ikWAM
+        name:
+          type: string
+          description: Effective name (the account's custom name when set, otherwise `default_name`).
+        default_name:
+          type: string
+        description:
+          type: string
+        language:
+          type: string
+          description: Primary language label.
+        application:
+          type: string
+          description: Intended use case, for example `narration`.
+        gender:
+          type: string
+          enum: [Male, Female, Other]
+        is_favorite:
+          type: boolean
+          description: Whether the authenticated account marked this voice as a favorite.
+      additionalProperties: false
+
+    VideoTranslateVoicesResponse:
+      type: object
+      required: [voices, pagination]
+      properties:
+        voices:
+          type: array
+          items:
+            $ref: "#/components/schemas/VideoTranslateVoice"
+        pagination:
+          $ref: "#/components/schemas/PaginationInfo"
+      additionalProperties: false
+
+    PaginationInfo:
+      type: object
+      required:
+        - limit
+        - offset
+        - total
+      properties:
+        limit:
+          type: integer
+          minimum: 1
+          description: Applied page size.
+        offset:
+          type: integer
+          minimum: 0
+          description: Applied result offset.
+        total:
+          type: integer
+          minimum: 0
+          description: Total number of matching records.
+      additionalProperties: false
+
+    Error:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: string
+          description: Human-readable error message.
+      additionalProperties: false

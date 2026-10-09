@@ -1,14 +1,22 @@
 import { defineConfig } from "astro/config";
 import {
+  fileSystemSDKJSONLoader,
   generateAPIReferenceItems,
   stainlessDocs,
   type ReferenceSidebarConfigItem,
 } from "@stainless-api/docs";
 import aiChat from "@stainless-api/docs-ai-chat/plugin";
 
-const LIPSYNC_METHOD_ORDER = ["Generate", "Generate With Media", "Retrieve", "List"];
+const LIPSYNC_METHOD_ORDER = [
+  "Generate",
+  "Generate With Media",
+  "Retrieve",
+  "List",
+];
 
-function dedupeMethodEntries(entries: ReferenceSidebarConfigItem[]): ReferenceSidebarConfigItem[] {
+function dedupeMethodEntries(
+  entries: ReferenceSidebarConfigItem[],
+): ReferenceSidebarConfigItem[] {
   const seen = new Set<string>();
   const result: ReferenceSidebarConfigItem[] = [];
 
@@ -35,7 +43,9 @@ function dedupeMethodEntries(entries: ReferenceSidebarConfigItem[]): ReferenceSi
   return result;
 }
 
-function reorderLipsyncGroup(entries: ReferenceSidebarConfigItem[]): ReferenceSidebarConfigItem[] {
+function reorderLipsyncGroup(
+  entries: ReferenceSidebarConfigItem[],
+): ReferenceSidebarConfigItem[] {
   const methods = entries.filter((entry) => entry.kind === "method_page");
   const others = entries.filter((entry) => entry.kind !== "method_page");
 
@@ -65,7 +75,9 @@ function normalizeApiReferenceSidebar(
 
   const findGroupIndex = (label: string) =>
     normalized.findIndex(
-      (entry) => entry.kind === "group" && entry.label.toLowerCase() === label.toLowerCase(),
+      (entry) =>
+        entry.kind === "group" &&
+        entry.label.toLowerCase() === label.toLowerCase(),
     );
 
   const lipsyncIdx = findGroupIndex("Lipsync");
@@ -76,7 +88,9 @@ function normalizeApiReferenceSidebar(
     const requests = normalized[requestsIdx];
 
     if (lipsync.kind === "group" && requests.kind === "group") {
-      const requestMethods = requests.entries.filter((entry) => entry.kind === "method_page");
+      const requestMethods = requests.entries.filter(
+        (entry) => entry.kind === "method_page",
+      );
       lipsync.entries = reorderLipsyncGroup(
         dedupeMethodEntries([...lipsync.entries, ...requestMethods]),
       );
@@ -95,7 +109,10 @@ function normalizeApiReferenceSidebar(
       if (hasMe) {
         users.entries = users.entries.filter(
           (entry) =>
-            !(entry.kind === "method_page" && entry.label.toLowerCase() === "retrieve current"),
+            !(
+              entry.kind === "method_page" &&
+              entry.label.toLowerCase() === "retrieve current"
+            ),
         );
       }
 
@@ -112,6 +129,11 @@ export default defineConfig({
     stainlessDocs({
       apiReference: {
         stainlessProject: "chamelaion",
+        loadSDKJSONFiles: fileSystemSDKJSONLoader({
+          specPath: "./stainless/openapi.yaml",
+          configFilePath: "./stainless/stainless.yml",
+          languages: ["http", "typescript", "python", "go"],
+        }),
         propertySettings: {
           collapseDescription: false,
           expandDepth: 2,
@@ -202,16 +224,13 @@ export default defineConfig({
           sidebar: [
             {
               label: "Getting Started",
-              items: [
-                "",
-                "guides/quickstart",
-                "guides/authentication",
-              ],
+              items: ["", "guides/quickstart", "guides/authentication"],
             },
             {
               label: "Core Guides",
               items: [
                 "guides/generate-lipsync",
+                "guides/video-translate",
                 "guides/polling-status",
                 "guides/error-handling",
               ],

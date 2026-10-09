@@ -1,0 +1,100 @@
+# yaml-language-server: $schema=https://app.stainless.com/config.schema.json
+
+edition: 2025-10-10
+
+organization:
+  name: Chamelaion
+  docs: https://docs.chamelaion.com
+  contact: support@chamelaion.com
+
+targets:
+  typescript:
+    edition: typescript.2025-10-10
+    package_name: chamelaion
+    production_repo: chamelaion/chemalaion-typescript
+    publish:
+      npm: true
+  python:
+    edition: python.2025-10-10
+    package_name: chamelaion
+    production_repo: chamelaion/chamelaion-python
+    publish:
+      pypi: true
+  go:
+    edition: go.2025-10-10
+    package_name: github.com/chamelaion/chamelaion-go
+    production_repo: chamelaion/chamelaion-go
+    publish:
+      go: true
+
+environments:
+  production: https://api.chamelaion.com/api
+  staging: https://api.dev.chamelaion.com/api
+
+resources:
+  health:
+    methods:
+      check: get /health
+  users:
+    methods:
+      me: get /v1/users/me
+  lipsync:
+    methods:
+      generate: post /v1/lipsync/generate
+      generate_with_media: post /v1/lipsync/generate-with-media
+    subresources:
+      requests:
+        methods:
+          retrieve: get /v1/lipsync/requests/{id}
+          list: get /v1/lipsync/requests
+  video_translate:
+    methods:
+      generate: post /v1/video-translate/generate
+      generate_with_media: post /v1/video-translate/generate-with-media
+    subresources:
+      requests:
+        methods:
+          retrieve: get /v1/video-translate/requests/{id}
+          list: get /v1/video-translate/requests
+      voices:
+        methods:
+          list: get /v1/video-translate/voices
+
+client_settings:
+  opts:
+    bearer_token:
+      type: string
+      read_env: CHAMELAION_BEARER_TOKEN
+      nullable: true
+      auth:
+        security_scheme: bearerAuth
+    api_key:
+      type: string
+      read_env: CHAMELAION_API_KEY
+      nullable: true
+      auth:
+        security_scheme: apiKey
+
+security_schemes:
+  bearerAuth:
+    type: http
+    scheme: bearer
+  apiKey:
+    type: apiKey
+    in: header
+    name: x-api-key
+
+security:
+  - bearerAuth: []
+  - apiKey: []
+
+readme:
+  example_requests:
+    default:
+      type: request
+      endpoint: post /v1/video-translate/generate
+      params: {}
+    headline:
+      type: request
+      endpoint: post /v1/video-translate/generate
+      params: {}
