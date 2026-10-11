@@ -125,6 +125,7 @@ function normalizeApiReferenceSidebar(
 
 // https://astro.build/config
 export default defineConfig({
+  site: "https://docs.chamelaion.com",
   integrations: [
     stainlessDocs({
       apiReference: {
