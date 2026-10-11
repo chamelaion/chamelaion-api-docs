@@ -7,6 +7,12 @@ import { Callout, Accordion } from "@stainless-api/docs/components";
 
 CHAMELAION provides two endpoints for generating lip sync videos: one accepts media URLs and another accepts direct file uploads. Both create an asynchronous job and return a `request_id` for tracking.
 
+<Callout variant="info">
+  Lip Sync matches a video to audio you already have. To translate a video end
+  to end, including transcription, translation, voices, and lip sync, use
+  [Video Translate](/guides/video-translate).
+</Callout>
+
 ## Option 1: Generate from URLs
 
 Use `POST /v1/lipsync/generate` when your video and audio are hosted at publicly accessible URLs. This is the most common integration pattern.
@@ -128,9 +134,8 @@ Use `POST /v1/lipsync/generate-with-media` when you need to upload files directl
 
 | Field                              | Type    | Required | Description                                                |
 | :--------------------------------- | :------ | :------- | :--------------------------------------------------------- |
-| `video`                            | file    | Yes      | Source video file (MP4)                                    |
-| `audio`                            | file    | Yes      | Target audio file (WAV or MP3)                             |
-| `model`                            | string  | No       | Model to use (currently `"lipsync-2"`)                     |
+| `video`                            | file    | Yes      | Source video file, for example MP4                         |
+| `audio`                            | file    | Yes      | Target audio file, for example WAV or MP3                  |
 | `reference_id`                     | string  | No       | Your own identifier for this request                       |
 | `disable_active_speaker_detection` | boolean | No       | Set to `true` to skip speaker detection (default: `false`) |
 
@@ -139,8 +144,8 @@ Use `POST /v1/lipsync/generate-with-media` when you need to upload files directl
 ```bash
 curl -X POST https://api.chamelaion.com/api/v1/lipsync/generate-with-media \
   -H "Authorization: Bearer $CHAMELAION_API_KEY" \
-  -F "video=@/path/to/source-video.mp4" \
-  -F "audio=@/path/to/target-audio.wav" \
+  -F "video=@/path/to/source-video.mp4;type=video/mp4" \
+  -F "audio=@/path/to/target-audio.wav;type=audio/wav" \
   -F "reference_id=upload-demo-01"
 ```
 
@@ -170,11 +175,19 @@ print(f"Request ID: {result['request_id']}")
 ### TypeScript example (Node.js)
 
 ```typescript
-import { createReadStream } from "fs";
+import { openAsBlob } from "node:fs";
 
 const formData = new FormData();
-formData.append("video", createReadStream("source-video.mp4"));
-formData.append("audio", createReadStream("target-audio.wav"));
+formData.append(
+  "video",
+  await openAsBlob("source-video.mp4", { type: "video/mp4" }),
+  "source-video.mp4",
+);
+formData.append(
+  "audio",
+  await openAsBlob("target-audio.wav", { type: "audio/wav" }),
+  "target-audio.wav",
+);
 formData.append("reference_id", "upload-demo-01");
 
 const response = await fetch(
@@ -192,7 +205,7 @@ const result = await response.json();
 console.log(`Request ID: ${result.request_id}`);
 ```
 
-The response format is identical to the URL-based endpoint.
+Set each file's content type (for example `video/mp4` and `audio/wav`). Files sent as a generic type such as `application/octet-stream` are rejected. The response format is identical to the URL-based endpoint.
 
 ## Active speaker detection
 
@@ -258,6 +271,8 @@ The `reference_id` field lets you tag requests with your own identifiers. This i
 - Linking CHAMELAION requests to your internal database records
 - Retrieving requests by your own ID instead of the CHAMELAION UUID
 - Batch tracking and reporting
+
+Keep reference IDs unique: retrieving a single request by a `reference_id` that several requests share fails with a `500` error.
 
 ```json
 {

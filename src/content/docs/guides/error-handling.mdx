@@ -21,38 +21,59 @@ The `error` field always contains a descriptive message explaining what went wro
 
 ## HTTP status codes
 
-| Status | Meaning                  | Description                                             |
-| :----- | :----------------------- | :------------------------------------------------------ |
-| 200    | Success                  | Request completed successfully                           |
-| 400    | Bad Request              | Invalid request body, missing fields, or wrong format    |
-| 401    | Unauthorized             | Authentication failed or missing                         |
-| 404    | Not Found                | The requested lip sync job doesn't exist                 |
-| 412    | Precondition Failed      | Token limit reached. Upgrade your plan                   |
-| 429    | Too Many Requests        | Rate limit exceeded. Slow down                           |
-| 500    | Internal Server Error    | Something went wrong on our side                         |
+| Status | Meaning               | Description                                                       |
+| :----- | :-------------------- | :---------------------------------------------------------------- |
+| 200    | Success               | Request completed successfully                                    |
+| 400    | Bad Request           | Invalid request body, missing fields, or wrong format             |
+| 401    | Unauthorized          | Authentication failed or missing                                  |
+| 404    | Not Found             | The requested Lip Sync or Video Translate request doesn't exist   |
+| 408    | Request Timeout       | Video Translate upload stalled for more than 30 seconds           |
+| 412    | Precondition Failed   | Token limit reached. Upgrade your plan                            |
+| 413    | Payload Too Large     | Video Translate request exceeds the size limit                    |
+| 429    | Too Many Requests     | Rate limit or Video Translate concurrency limit exceeded          |
+| 500    | Internal Server Error | Something went wrong on our side                                  |
 
 ## 400 - Bad Request errors
 
 These indicate problems with your request format or content.
 
-### URL-based generation (`/v1/lipsync/generate`)
+### Lip Sync from URLs (`/v1/lipsync/generate`)
 
-| Error Message                                  | Cause                                              |
-| :--------------------------------------------- | :------------------------------------------------- |
-| `invalid request body`                         | JSON is malformed or doesn't match the schema      |
-| `content-type must be application/json`        | Missing or wrong `Content-Type` header             |
-| `expected exactly one video input`             | `inputs` doesn't contain exactly one video item     |
-| `expected exactly one audio input`             | `inputs` doesn't contain exactly one audio item     |
-| `input type must be "video" or "audio"`        | An input has an unrecognized `type` value           |
+| Error Message                             | Cause                                                   |
+| :---------------------------------------- | :------------------------------------------------------ |
+| `invalid request body`                    | JSON is malformed or doesn't match the schema           |
+| `content-type must be application/json`   | Missing or wrong `Content-Type` header                  |
+| `inputs is required`                      | `inputs` is missing or empty                            |
+| `expected exactly one video input`        | `inputs` doesn't contain exactly one video item         |
+| `expected exactly one audio input`        | `inputs` doesn't contain exactly one audio item         |
+| `input type must be "video" or "audio"`   | An input has an unrecognized `type` value               |
+| `unable to access media url`              | CHAMELAION could not download a media URL               |
+| `concurrency limit reached for your plan: ...` | Too many unfinished lip sync requests for your plan |
 
-### File upload (`/v1/lipsync/generate-with-media`)
+### Lip Sync file upload (`/v1/lipsync/generate-with-media`)
 
-| Error Message                                  | Cause                                              |
-| :--------------------------------------------- | :------------------------------------------------- |
-| `content-type must be multipart/form-data`     | Wrong content type. Must be `multipart/form-data`   |
-| `video file is required`                       | No `video` field in the form data                   |
-| `audio file is required`                       | No `audio` field in the form data                   |
-| `model must be "lipsync-2"`                    | Invalid model name specified                        |
+| Error Message                              | Cause                                                  |
+| :----------------------------------------- | :----------------------------------------------------- |
+| `content-type must be multipart/form-data` | Wrong content type. Must be `multipart/form-data`      |
+| `video file is required`                   | No `video` field in the form data                      |
+| `audio file is required`                   | No `audio` field in the form data                      |
+| `uploaded file is not a valid video input` | The file isn't sent as `video/*` (or `audio/*` for the audio part) |
+| `concurrency limit reached for your plan: ...` | Too many unfinished lip sync requests for your plan |
+
+### Video Translate (`/v1/video-translate/*`)
+
+Video Translate checks settings, subtitle syntax, and voice IDs before creating the request. Common errors:
+
+- `target_languages must contain at least one language`: `target_languages` is missing or empty.
+- `target_languages must not contain more than 10 languages`: Too many target languages.
+- `unsupported target language "xx"`: The code isn't a [supported language](/guides/video-translate#supported-languages).
+- `source_language must not be included in target_languages`: The source language is also listed as a target.
+- `video URL is not accessible`: CHAMELAION could not download the video URL.
+- `input must be a video file`: The URL or upload isn't a video.
+- `<field> is not a valid SRT file: ...`: A subtitle file has a syntax error. The message names the field (for example `source_srt` or `target_srt.de`) and the line.
+- `speaker_voices references unknown or unavailable voice IDs: ...`: A voice ID isn't listed by `GET /v1/video-translate/voices`.
+
+The [API reference](/api/resources/video_translate/methods/generate) lists every validation rule.
 
 ### Example: handling 400 errors
 
@@ -71,7 +92,7 @@ response = requests.post(
 if response.status_code == 400:
     error = response.json()
     print(f"Bad request: {error['error']}")
-    # Bad request: expected exactly one video input
+    # Bad request: inputs is required
 ```
 
 ## 401 - Authentication errors
@@ -87,7 +108,7 @@ See the [Authentication guide](/guides/authentication) for details. Common cause
 
 ## 404 - Not Found
 
-Returned when you request a lip sync job that doesn't exist:
+Returned when you request a job that doesn't exist. The message is `lipsync request not found` or `video translate request not found`:
 
 ```json
 {
@@ -99,6 +120,10 @@ Double-check the `request_id` or `reference_id` you're using. Common causes:
 - Typo in the ID
 - The request belongs to a different account
 - Using a `reference_id` that was never set
+
+## 408 and 413 - Upload limits
+
+Video Translate returns `413` when a JSON body exceeds 8 MiB or an upload body exceeds 2 GiB plus 9 MiB for form fields and SRT files. A video over 2 GiB returns `400` (`video file exceeds the 2 GiB limit`). An upload that sends no data for 30 seconds returns `408`. See [Limits](/guides/video-translate#limits).
 
 ## 412 - Token Limit Reached
 
@@ -123,8 +148,10 @@ You've exceeded the request rate limit:
 ```
 
 <Callout variant="note">
-  The generation endpoints are rate-limited to **60 requests per minute**. Implement exponential backoff to handle rate limits gracefully.
+  Rate limits apply per API token: **10 requests per 10 seconds** on generation endpoints and **100 requests per 10 seconds** on read endpoints. Implement exponential backoff to handle rate limits gracefully.
 </Callout>
+
+Video Translate also returns `429` when your account has too many active translations (`too many active video translations for this account`) or when capacity is temporarily full (`video translation capacity is temporarily exhausted`). Retry with backoff.
 
 ### Handling rate limits with retry logic
 
@@ -266,9 +293,9 @@ def chamelaion_request(method: str, path: str, max_retries: int = 3, **kwargs):
 
   </Accordion>
   <Accordion>
-    <Accordion.Summary>My URLs return "video URL is not accessible"</Accordion.Summary>
+    <Accordion.Summary>My media URLs are rejected as not accessible</Accordion.Summary>
 
-    CHAMELAION's servers need to download your media. Ensure:
+    Lip Sync returns `unable to access media url` and Video Translate returns `video URL is not accessible` when CHAMELAION's servers can't download your media. Ensure:
     - The URLs are publicly accessible (no authentication required)
     - The URLs don't have IP restrictions or geo-blocking
     - The URLs return the actual media content (not an HTML page)
@@ -276,11 +303,21 @@ def chamelaion_request(method: str, path: str, max_retries: int = 3, **kwargs):
 
   </Accordion>
   <Accordion>
+    <Accordion.Summary>My video translation failed after it was accepted</Accordion.Summary>
+
+    Some checks run only after the video is processed. Read `error_message` on the request, then:
+    - If the source language couldn't be detected, set `source_language` explicitly
+    - If the detected source language is also a target, remove it from `target_languages`
+    - If SRT validation failed, make sure source and target files have the same number of cues and speakers, and that timings fit within the video
+    - If `speaker_voices` failed, make sure every key matches a `Speaker N:` number in your `source_srt`
+
+  </Accordion>
+  <Accordion>
     <Accordion.Summary>I keep getting 401 errors</Accordion.Summary>
 
     - Verify your API key in the [Dashboard](https://app.chamelaion.com/settings)
     - Check that you're using the correct header format (`Bearer <token>` or `x-api-key: <token>`)
-    - Make sure there's no trailing whitespace in your token
+    - The `Bearer` prefix is case-sensitive
     - Confirm the key hasn't been revoked
 
   </Accordion>

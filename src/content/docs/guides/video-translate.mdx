@@ -1,13 +1,13 @@
 ---
 title: Translating Videos
-description: Translate videos with optional subtitles, speaker voices, lip sync, background audio, and completion webhooks.
+description: Translate a video into up to 10 languages with natural voices, lip sync, background audio, custom subtitles, and completion webhooks.
 ---
 
 import { Callout } from "@stainless-api/docs/components";
 
-Video Translate accepts either a publicly accessible video URL or a direct file upload. Both endpoints validate the request, create an asynchronous job, and return a `request_id` that you can poll.
+Video Translate turns one source video into translated versions in up to 10 target languages. CHAMELAION transcribes the speech, translates it, voices each speaker, keeps the background audio, and lip-syncs the result (background audio and lip sync are on by default). Each target language returns a video, an audio track, and an SRT subtitle file.
 
-Background audio and lip sync are enabled by default. Set `disable_background_audio` or `disable_lip_sync` to `true` only when you want to turn that feature off.
+Send the video as a public URL or as a direct upload. Both endpoints validate the request, create an asynchronous job, and return a `request_id`. Poll it for the result, or set `webhook_url` to be notified.
 
 ## Translate a video URL
 
@@ -22,9 +22,6 @@ curl --request POST \
     "reference_id": "translation-001",
     "source_language": "en",
     "target_languages": ["de", "fr"],
-    "disable_background_audio": false,
-    "disable_lip_sync": false,
-    "formality": false,
     "webhook_url": "https://example.com/webhooks/chamelaion",
     "inputs": [
       {
@@ -35,11 +32,25 @@ curl --request POST \
   }'
 ```
 
-The video URL must be reachable by CHAMELAION. Signed URLs are supported as long as they remain valid while the source is downloaded.
+The URL must be reachable by CHAMELAION. Signed URLs work as long as they stay valid until the video is downloaded.
+
+### Parameters
+
+| Parameter                  | Type    | Required | Description                                                                                  |
+| :------------------------- | :------ | :------- | :------------------------------------------------------------------------------------------- |
+| `inputs`                   | array   | Yes      | Exactly one item with `type` set to `"video"` and the video `url`                            |
+| `target_languages`         | array   | Yes      | 1–10 unique [language codes](#supported-languages), excluding the source language            |
+| `source_language`          | string  | No       | Language spoken in the video. Detected automatically when omitted                            |
+| `reference_id`             | string  | No       | Your own identifier (max 255 characters), usable for retrieval and filtering                  |
+| `webhook_url`              | string  | No       | HTTPS URL that receives a `POST` when the request completes or fails                         |
+| `disable_background_audio` | boolean | No       | Set to `true` to drop the original background audio (default: `false`)                       |
+| `disable_lip_sync`         | boolean | No       | Set to `true` to skip lip sync and only replace the audio (default: `false`)                  |
+| `formality`                | boolean | No       | Set to `true` for a formal tone in translations, `false` for a casual tone (default: `false`) |
+| `config`                   | object  | No       | Optional [subtitles](#supply-srt-files) and [speaker voices](#assign-voices-to-speakers)      |
 
 ## Upload a video directly
 
-Use `POST /v1/video-translate/generate-with-media` to send the video as multipart form data. `target_languages` may be a JSON array or a comma-separated string.
+Use `POST /v1/video-translate/generate-with-media` to send the video as `multipart/form-data`. It accepts the same settings as form fields. `target_languages` can be a JSON array or a comma-separated string, and `config` is a JSON-encoded object.
 
 ```bash
 curl --request POST \
@@ -49,17 +60,14 @@ curl --request POST \
   --form 'target_languages=["de","fr"]' \
   --form "source_language=en" \
   --form "reference_id=translation-upload-001" \
-  --form "disable_background_audio=false" \
-  --form "disable_lip_sync=false" \
-  --form "formality=false" \
   --form "webhook_url=https://example.com/webhooks/chamelaion"
 ```
 
-The maximum video size is 2 GiB. Each SRT file may be at most 1 MiB, with at most 5 MiB of subtitles across the request.
+The video can be up to 2 GiB and must contain a video stream.
 
 ## Supply SRT files
 
-For a direct upload, send the source subtitles as `source_srt` and each translated subtitle file as `target_srt.<language>`. The target language must also appear in `target_languages`.
+By default, CHAMELAION transcribes and translates the speech automatically. To control the exact wording, upload the source subtitles as `source_srt` and translated subtitles as `target_srt.<language>`. Every target SRT language must also appear in `target_languages`. Languages without a target SRT are translated automatically.
 
 ```bash
 curl --request POST \
@@ -72,13 +80,29 @@ curl --request POST \
   --form "target_srt.de=@/absolute/path/target-de.srt;type=application/x-subrip"
 ```
 
-SRT cue text must use `Speaker N: text`, where `N` is a non-negative integer. Source and target subtitles must have compatible cue counts and speakers.
+Each cue's text must start with `Speaker N:`, where `N` is a non-negative integer:
 
-You can instead include subtitles inline under `config.source_srt` and `config.target_srts` when using the JSON endpoint. Do not supply the same subtitle both inline and as a multipart file.
+```text
+1
+00:00:00,000 --> 00:00:02,500
+Speaker 0: Welcome back.
+
+2
+00:00:02,600 --> 00:00:05,000
+Speaker 1: Thanks for having me.
+```
+
+- SRT files must be UTF-8 encoded, with file names ending in `.srt`.
+- Source and target files must have the same number of cues and the same speakers.
+- Cue timings must fit within the video's duration.
+
+Syntax errors return `400` immediately. Cue, speaker, and timing mismatches are checked once the video is processed, and fail the request with an `error_message`.
+
+You can also send subtitles inline in `config` on either endpoint, as `config.source_srt` and `config.target_srts.<language>`. Each is an object with a `content` string and optional `file_name` and `language`. Don't send the same subtitle both inline and as a file.
 
 ## Assign voices to speakers
 
-First list the voices available to the authenticated account:
+List the voices available to your account. Filter by `language`, `gender`, `application`, `search`, or `favorite`:
 
 ```bash
 curl --request GET \
@@ -86,7 +110,25 @@ curl --request GET \
   --header "Authorization: Bearer $CHAMELAION_API_KEY"
 ```
 
-Use a returned `voice_id` as the value in `config.speaker_voices`. Speaker keys are strings containing non-negative integers, such as `"0"` and `"1"`; values such as `"speaker-1"` are invalid.
+```json
+{
+  "voices": [
+    {
+      "voice_id": "21m00Tcm4TlvDq8ikWAM",
+      "name": "Rachel",
+      "default_name": "Rachel",
+      "description": "Calm, young adult female voice.",
+      "language": "en",
+      "application": "narration",
+      "gender": "Female",
+      "is_favorite": false
+    }
+  ],
+  "pagination": { "limit": 50, "offset": 0, "total": 1 }
+}
+```
+
+Map speaker IDs to a `voice_id` in `config.speaker_voices`. Keys are the speaker numbers from the `Speaker N:` cues, written as strings such as `"0"` and `"1"`; names such as `"speaker-1"` are rejected. You can assign up to 32 speakers.
 
 ```bash
 curl --request POST \
@@ -94,18 +136,20 @@ curl --request POST \
   --header "Authorization: Bearer $CHAMELAION_API_KEY" \
   --form "video=@/absolute/path/source-video.mp4;type=video/mp4" \
   --form 'target_languages=["de"]' \
-  --form 'config={"speaker_voices":{"0":"21m00Tcm4TlvDq8ikWAM"}}'
+  --form "source_srt=@/absolute/path/source-en.srt;type=application/x-subrip" \
+  --form 'config={"speaker_voices":{"0":"21m00Tcm4TlvDq8ikWAM","1":"AZnzlk1XvdvUeBnXmlld"}}'
 ```
 
 <Callout variant="note">
-  Voice IDs are validated before a request is created. Speaker IDs are validated
-  against the processed source media or supplied source subtitles before
-  translation starts.
+  Voice IDs are checked before the request is created. Speaker IDs are checked
+  against the source subtitles once the video is processed, so include a
+  `source_srt` when you assign voices. If a speaker ID is not found, the request
+  fails before translation starts.
 </Callout>
 
 ## Poll a request
 
-Generation returns a response immediately:
+Generation returns immediately:
 
 ```json
 {
@@ -114,7 +158,7 @@ Generation returns a response immediately:
 }
 ```
 
-Retrieve it by UUID or exact `reference_id`:
+Retrieve the request by its UUID or exact `reference_id`. If several requests share a `reference_id`, the newest is returned.
 
 ```bash
 curl --request GET \
@@ -122,32 +166,43 @@ curl --request GET \
   --header "Authorization: Bearer $CHAMELAION_API_KEY"
 ```
 
-When the status is `completed`, `outputs` is keyed by target language and contains freshly signed video, audio, and SRT URLs:
+A request moves through `queued` → `uploading` → `processing` → `completed` or `failed`. When it is `completed`, `outputs` is keyed by target language and contains video, audio, and SRT URLs. URLs are signed on every read and expire after one hour, so fetch the request again rather than storing them.
 
 ```json
 {
   "id": "4c98dd00-a982-47d9-a8d6-e1f0b35a8944",
-  "target_languages": ["de"],
+  "reference_id": "translation-001",
+  "webhook_url": "https://example.com/webhooks/chamelaion",
+  "source_language": "en",
+  "target_languages": ["de", "fr"],
   "disable_background_audio": false,
   "disable_lip_sync": false,
   "formality": false,
   "config": {},
   "status": "completed",
   "created_at": "2026-10-09T10:00:00Z",
+  "started_at": "2026-10-09T10:00:01Z",
   "finished_at": "2026-10-09T10:04:00Z",
   "outputs": {
     "de": {
       "video": "https://storage.example/signed/de.mp4",
       "audio": "https://storage.example/signed/de.wav",
       "srt": "https://storage.example/signed/de.srt"
+    },
+    "fr": {
+      "video": "https://storage.example/signed/fr.mp4",
+      "audio": "https://storage.example/signed/fr.wav",
+      "srt": "https://storage.example/signed/fr.srt"
     }
   }
 }
 ```
 
+When a request fails, `error_message` explains why. Subtitle content is never returned; `config` shows only the file name and language of each supplied SRT.
+
 ## List requests
 
-List requests with pagination and optional filters:
+List requests newest first, with pagination and optional filters:
 
 ```bash
 curl --request GET \
@@ -155,32 +210,91 @@ curl --request GET \
   --header "Authorization: Bearer $CHAMELAION_API_KEY"
 ```
 
-Available filters include `reference_id`, `status`, `source_language`, `target_language`, `created_after`, and `created_before`.
+| Parameter         | Description                                                                 |
+| :---------------- | :-------------------------------------------------------------------------- |
+| `limit`           | Page size, 1–100 (default: 20)                                              |
+| `offset`          | Number of results to skip (default: 0)                                      |
+| `reference_id`    | Exact `reference_id` match                                                  |
+| `status`          | `queued`, `uploading`, `processing`, `completed`, or `failed`               |
+| `source_language` | Explicit or detected source language                                        |
+| `target_language` | Requests that include this target language                                  |
+| `created_from`    | Created at or after this RFC 3339 timestamp, for example `2026-10-01T00:00:00Z` |
+| `created_to`      | Created at or before this RFC 3339 timestamp                                |
+
+The response has a `data` array and a `pagination` object with `limit`, `offset`, and `total`.
 
 ## Receive completion webhooks
 
-Set `webhook_url` to a public HTTPS endpoint. CHAMELAION sends one JSON `POST` after the request reaches `completed` or `failed`.
+Set `webhook_url` to a public HTTPS endpoint. CHAMELAION sends one JSON `POST` when the request reaches `completed` or `failed`:
 
-- `X-Chamelaion-Event` is `video_translate.completed` or `video_translate.failed`.
-- `X-Chamelaion-Delivery` uniquely identifies the delivery; use it for deduplication.
-- The body has `id`, `type`, `created_at`, and `data` fields.
-- HTTP 429, HTTP 5xx, and transport failures are retried up to three times with the same delivery ID.
-- Redirects and other non-2xx responses are treated as failures.
+```json
+{
+  "id": "5b0e7f7c-3c1e-4a5e-9f5d-0c6f1f0e2a11",
+  "type": "video_translate.completed",
+  "created_at": "2026-10-09T10:04:00Z",
+  "data": {
+    "id": "4c98dd00-a982-47d9-a8d6-e1f0b35a8944",
+    "status": "completed",
+    "outputs": { "de": { "video": "https://...", "audio": "https://...", "srt": "https://..." } }
+  }
+}
+```
 
-Your endpoint should return a 2xx response quickly and process the event idempotently.
+- `data` has the same fields as [`GET /v1/video-translate/requests/{id}`](#poll-a-request), without `webhook_url`.
+- The `X-Chamelaion-Event` header is `video_translate.completed` or `video_translate.failed`.
+- The `X-Chamelaion-Delivery` header matches the body's `id` and stays the same across retries. Use it to deduplicate.
+- Each attempt times out after 10 seconds. Network errors, HTTP 429, and HTTP 5xx are retried, for up to three attempts in total.
+- Redirects are not followed. Redirects and other non-2xx responses (except 429) are not retried.
+- Webhooks are not signed. Before acting on an event, confirm it by retrieving the request from the API.
+
+Return a 2xx response quickly and process the event asynchronously. Delivery is best effort, so [poll the request](#poll-a-request) as a fallback.
+
+## Limits
+
+| Item                         | Limit                                         |
+| :--------------------------- | :-------------------------------------------- |
+| Target languages per request | 10                                            |
+| Video size (URL or upload)   | 2 GiB                                         |
+| JSON request body            | 8 MiB                                         |
+| SRT file                     | 1 MiB and 5,000 cues each, 5 MiB per request  |
+| Speakers in `speaker_voices` | 32                                            |
+| `webhook_url` length         | 2,048 bytes                                   |
+
+## Supported languages
+
+Use these codes for `source_language`, `target_languages`, and SRT languages.
+
+| Code    | Language           | Code | Language         | Code | Language   |
+| :------ | :----------------- | :--- | :--------------- | :--- | :--------- |
+| `ar`    | Arabic             | `fr` | French           | `ne` | Nepali     |
+| `be`    | Belarusian         | `gl` | Galician         | `nl` | Dutch      |
+| `bg`    | Bulgarian          | `gu` | Gujarati         | `no` | Norwegian  |
+| `bn`    | Bengali            | `hi` | Hindi            | `or` | Odia       |
+| `bs`    | Bosnian            | `hu` | Hungarian        | `pl` | Polish     |
+| `ca`    | Catalan            | `id` | Indonesian       | `pt` | Portuguese |
+| `cs`    | Czech              | `it` | Italian          | `ro` | Romanian   |
+| `da`    | Danish             | `ja` | Japanese         | `ru` | Russian    |
+| `de`    | German             | `kk` | Kazakh           | `sk` | Slovak     |
+| `el`    | Greek              | `kn` | Kannada          | `sl` | Slovenian  |
+| `en`    | English            | `ko` | Korean           | `sr` | Serbian    |
+| `en-gb` | English (British)  | `lt` | Lithuanian       | `sv` | Swedish    |
+| `en-us` | English (American) | `lv` | Latvian          | `ta` | Tamil      |
+| `es`    | Spanish            | `mk` | Macedonian       | `te` | Telugu     |
+| `et`    | Estonian           | `ml` | Malayalam        | `tr` | Turkish    |
+| `fa`    | Persian            | `mr` | Marathi          | `uk` | Ukrainian  |
+| `fi`    | Finnish            | `ms` | Malay            | `vi` | Vietnamese |
+| `fil`   | Filipino           | `nb` | Norwegian Bokmål | `zh` | Chinese    |
 
 ## SDK examples
 
-All official SDKs support Video Translate starting with `v1.1.0`.
+The official [TypeScript](https://www.npmjs.com/package/chamelaion), [Python](https://pypi.org/project/chamelaion/), and [Go](https://github.com/chamelaion/chamelaion-go) SDKs support Video Translate starting with `v1.1.0`. Each client reads your key from `CHAMELAION_API_KEY` when you don't pass one.
 
 ### TypeScript
 
 ```typescript
 import Chamelaion from "chamelaion";
 
-const client = new Chamelaion({
-  bearerToken: process.env.CHAMELAION_API_KEY,
-});
+const client = new Chamelaion(); // reads CHAMELAION_API_KEY
 
 const job = await client.videoTranslate.generate({
   source_language: "en",
@@ -194,10 +308,9 @@ const result = await client.videoTranslate.requests.retrieve(job.request_id);
 ### Python
 
 ```python
-import os
 from chamelaion import Chamelaion
 
-client = Chamelaion(bearer_token=os.environ["CHAMELAION_API_KEY"])
+client = Chamelaion()  # reads CHAMELAION_API_KEY
 
 job = client.video_translate.generate(
     source_language="en",
@@ -208,4 +321,28 @@ job = client.video_translate.generate(
 result = client.video_translate.requests.retrieve(job.request_id)
 ```
 
-See the [Video Translate API reference](/api/resources/video_translate) for complete request and response schemas.
+### Go
+
+```go
+ctx := context.Background()
+client := chamelaion.NewClient() // reads CHAMELAION_API_KEY
+
+job, err := client.VideoTranslate.Generate(ctx, chamelaion.VideoTranslateGenerateParams{
+	SourceLanguage:  chamelaion.String("en"),
+	TargetLanguages: []string{"de"},
+	Inputs: []chamelaion.VideoTranslateGenerateParamsInput{
+		{Type: "video", URL: "https://example.com/source-video.mp4"},
+	},
+})
+if err != nil {
+	log.Fatal(err)
+}
+
+result, err := client.VideoTranslate.Requests.Get(ctx, job.RequestID)
+if err != nil {
+	log.Fatal(err)
+}
+fmt.Println(result.Status)
+```
+
+See the [Video Translate API reference](/api/resources/video_translate) for complete request and response schemas and SDK methods.

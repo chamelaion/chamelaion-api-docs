@@ -1,11 +1,11 @@
 ---
 title: Quickstart
-description: Go from zero to your first AI lip sync generation in under five minutes.
+description: Go from zero to your first AI lip sync or video translation request in minutes.
 ---
 
 import { Callout } from "@stainless-api/docs/components";
 
-This guide walks you through generating your first AI lip-synced video with the CHAMELAION API. You'll need an API key and a video + audio pair to get started.
+This guide walks you through generating your first AI lip-synced video with the CHAMELAION API, then shows how to [translate a video](#translate-a-video) with the same workflow. You'll need an API key and a video + audio pair to get started.
 
 ## Prerequisites
 
@@ -125,13 +125,13 @@ curl https://api.chamelaion.com/api/v1/lipsync/requests/6f82a2d8-a6d4-4e8a-a0fa-
   -H "Authorization: Bearer YOUR_API_KEY"
 ```
 
-The response includes the current status and, when complete, the output URL:
+A lip sync request moves from `queued` to `started` to `finished` (or `failed`). When it is `finished`, the response includes the output URL:
 
 ```json
 {
   "id": "6f82a2d8-a6d4-4e8a-a0fa-e8b09823a2d8",
   "reference_id": "my-first-lipsync",
-  "status": "completed",
+  "status": "finished",
   "created_at": "2026-04-07T10:00:00Z",
   "started_at": "2026-04-07T10:00:05Z",
   "finished_at": "2026-04-07T10:01:30Z",
@@ -146,7 +146,7 @@ The response includes the current status and, when complete, the output URL:
 
 ## Step 4: Download your result
 
-Once the status is `completed`, the `output_url` field contains a link to your lip-synced video. Download it or stream it directly.
+Once the status is `finished`, the `output_url` field contains a link to your lip-synced video. The link is signed and expires after one hour, so download it promptly or retrieve the request again for a fresh link.
 
 ```bash
 curl -o result.mp4 "https://storage.chamelaion.com/output/6f82a2d8.mp4"
@@ -191,7 +191,7 @@ while True:
 
     print(f"Status: {result['status']}")
 
-    if result["status"] == "completed":
+    if result["status"] == "finished":
         print(f"Output URL: {result['output_url']}")
         break
     elif result["status"] == "failed":
@@ -201,9 +201,33 @@ while True:
     time.sleep(5)
 ```
 
+## Translate a video
+
+Video Translate follows the same submit-and-poll flow. Send one video and the languages you want; CHAMELAION handles transcription, translation, voices, and lip sync. Replace the URL with your own video:
+
+```bash
+curl -X POST https://api.chamelaion.com/api/v1/video-translate/generate \
+  -H "Authorization: Bearer YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "reference_id": "my-first-translation",
+    "source_language": "en",
+    "target_languages": ["de", "fr"],
+    "inputs": [
+      {
+        "type": "video",
+        "url": "https://example.com/source-video.mp4"
+      }
+    ]
+  }'
+```
+
+Poll `GET /v1/video-translate/requests/{request_id}` until the status is `completed`. The response then contains a video, audio, and SRT URL for each target language.
+
 ## Next steps
 
 - Learn about [Authentication](/guides/authentication) options
 - Explore [Lip Sync Generation](/guides/generate-lipsync) in detail, including file uploads
+- Translate videos with custom subtitles, voices, and webhooks in [Translating Videos](/guides/video-translate)
 - Understand [Request Polling](/guides/polling-status) patterns
 - Handle [Errors](/guides/error-handling) gracefully

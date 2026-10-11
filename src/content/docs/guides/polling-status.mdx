@@ -1,22 +1,32 @@
 ---
 title: Polling & Request Status
-description: How to check the status of lip sync jobs and list your generation history.
+description: How to check the status of lip sync and video translation jobs and list your request history.
 ---
 
 import { Callout } from "@stainless-api/docs/components";
 
-CHAMELAION processes lip sync jobs asynchronously. After submitting a generation request, you'll receive a `request_id` that you use to poll for the result. This guide covers how to check individual request status and list your generation history.
+CHAMELAION processes jobs asynchronously. After submitting a generation request, you'll receive a `request_id` that you use to poll for the result. This guide covers how to check individual request status and list your request history.
+
+Lip Sync and Video Translate use the same pattern on separate endpoints:
+
+- **Lip Sync:** `GET /v1/lipsync/requests/{id}` and `GET /v1/lipsync/requests`
+- **Video Translate:** `GET /v1/video-translate/requests/{id}` and `GET /v1/video-translate/requests`
+
+The examples below use Lip Sync. For Video Translate responses and filters, see [Poll a request](/guides/video-translate#poll-a-request) and [List requests](/guides/video-translate#list-requests).
 
 ## Request lifecycle
 
-Every lip sync request goes through these stages:
+Lip Sync requests move through `queued` → `started` → `finished`. Video Translate requests move through `queued` → `uploading` → `processing` → `completed`. Either can end in `failed`.
 
-| Status      | Description                                              |
-| :---------- | :------------------------------------------------------- |
-| `queued`    | Request received and waiting to be processed             |
-| `processing`| Lip sync generation is in progress                       |
-| `completed` | Generation finished. `output_url` is available           |
-| `failed`    | Generation failed. Check `error_message` for details     |
+| Status       | Product         | Description                                                |
+| :----------- | :-------------- | :--------------------------------------------------------- |
+| `queued`     | Both            | Request received and waiting to be processed               |
+| `started`    | Lip Sync        | Lip sync generation is in progress                         |
+| `finished`   | Lip Sync        | Generation finished. `output_url` is available             |
+| `uploading`  | Video Translate | The source video is being downloaded and prepared          |
+| `processing` | Video Translate | Translation is in progress                                 |
+| `completed`  | Video Translate | Translation finished. `outputs` is available               |
+| `failed`     | Both            | The request failed. Check `error_message` for details      |
 
 ## Get a single request
 
@@ -36,13 +46,15 @@ curl https://api.chamelaion.com/api/v1/lipsync/requests/my-custom-reference \
   -H "Authorization: Bearer $CHAMELAION_API_KEY"
 ```
 
-### Response (completed)
+Use unique reference IDs. If several lip sync requests share a `reference_id`, retrieving by that value fails with a `500` error.
+
+### Response (finished)
 
 ```json
 {
   "id": "6f82a2d8-a6d4-4e8a-a0fa-e8b09823a2d8",
   "reference_id": "my-custom-reference",
-  "status": "completed",
+  "status": "finished",
   "created_at": "2026-04-07T10:00:00Z",
   "started_at": "2026-04-07T10:00:05Z",
   "finished_at": "2026-04-07T10:01:30Z",
@@ -60,13 +72,13 @@ curl https://api.chamelaion.com/api/v1/lipsync/requests/my-custom-reference \
   "created_at": "2026-04-07T10:00:00Z",
   "started_at": "2026-04-07T10:00:05Z",
   "finished_at": "2026-04-07T10:00:12Z",
-  "error_message": "video URL is not accessible"
+  "error_message": "failed to process video"
 }
 ```
 
 ## Polling pattern
 
-Here's the recommended polling pattern with exponential backoff:
+Here's the recommended polling pattern with exponential backoff. Pass `video-translate` as the product to poll a Video Translate request:
 
 ### Python
 
@@ -80,20 +92,20 @@ BASE_URL = "https://api.chamelaion.com/api"
 HEADERS = {"Authorization": f"Bearer {API_KEY}"}
 
 
-def wait_for_completion(request_id: str, timeout: int = 600) -> dict:
-    """Poll a lip sync request until it completes or fails."""
+def wait_for_completion(request_id: str, product: str = "lipsync", timeout: int = 600) -> dict:
+    """Poll a request until it completes or fails."""
     start = time.time()
     delay = 2
 
     while time.time() - start < timeout:
         response = requests.get(
-            f"{BASE_URL}/v1/lipsync/requests/{request_id}",
+            f"{BASE_URL}/v1/{product}/requests/{request_id}",
             headers=HEADERS,
         )
         response.raise_for_status()
         result = response.json()
 
-        if result["status"] == "completed":
+        if result["status"] in ("finished", "completed"):
             return result
         elif result["status"] == "failed":
             raise Exception(f"Generation failed: {result.get('error_message')}")
@@ -109,6 +121,7 @@ def wait_for_completion(request_id: str, timeout: int = 600) -> dict:
 ```typescript
 async function waitForCompletion(
   requestId: string,
+  product: "lipsync" | "video-translate" = "lipsync",
   timeoutMs = 600_000
 ): Promise<Record<string, unknown>> {
   const start = Date.now();
@@ -116,13 +129,13 @@ async function waitForCompletion(
 
   while (Date.now() - start < timeoutMs) {
     const response = await fetch(
-      `https://api.chamelaion.com/api/v1/lipsync/requests/${requestId}`,
+      `https://api.chamelaion.com/api/v1/${product}/requests/${requestId}`,
       { headers: { Authorization: `Bearer ${process.env.CHAMELAION_API_KEY}` } }
     );
 
     const result = await response.json();
 
-    if (result.status === "completed") return result;
+    if (result.status === "finished" || result.status === "completed") return result;
     if (result.status === "failed") {
       throw new Error(`Generation failed: ${result.error_message}`);
     }
@@ -136,12 +149,12 @@ async function waitForCompletion(
 ```
 
 <Callout variant="info">
-  Start with a 2-second polling interval and increase gradually up to 15 seconds. This balances responsiveness with rate limit usage.
+  Start with a 2-second polling interval and increase gradually up to 15 seconds. This balances responsiveness with rate limit usage. Video translations take longer than lip sync jobs, so raise the timeout or use a [completion webhook](/guides/video-translate#receive-completion-webhooks) instead of polling.
 </Callout>
 
 ## List all requests
 
-Use `GET /v1/lipsync/requests` to retrieve a paginated list of your lip sync requests.
+Use `GET /v1/lipsync/requests` to retrieve a paginated list of your lip sync requests, newest first.
 
 ### Basic listing
 
@@ -180,7 +193,7 @@ curl "https://api.chamelaion.com/api/v1/lipsync/requests?reference_id=batch-2026
     {
       "id": "6f82a2d8-a6d4-4e8a-a0fa-e8b09823a2d8",
       "reference_id": "batch-2026-04",
-      "status": "completed",
+      "status": "finished",
       "created_at": "2026-04-07T10:00:00Z",
       "started_at": "2026-04-07T10:00:05Z",
       "finished_at": "2026-04-07T10:01:30Z",
@@ -240,13 +253,15 @@ def list_all_requests():
 
 ## Response fields reference
 
+Lip Sync requests return these fields. Video Translate requests also return their settings (`source_language`, `target_languages`, and so on) and replace `output_url` with `outputs`, keyed by target language. See the [request schema](/api/resources/video_translate/subresources/requests/methods/retrieve) for every field.
+
 | Field           | Type     | Present              | Description                                |
 | :-------------- | :------- | :------------------- | :----------------------------------------- |
 | `id`            | string   | Always               | CHAMELAION request UUID                     |
 | `reference_id`  | string   | If provided at creation | Your custom identifier                   |
-| `status`        | string   | Always               | Current status (`queued`, `processing`, `completed`, `failed`) |
+| `status`        | string   | Always               | Current status (`queued`, `started`, `finished`, `failed`) |
 | `created_at`    | datetime | Always               | When the request was created (UTC)          |
 | `started_at`    | datetime | After processing starts | When processing began (UTC)              |
 | `finished_at`   | datetime | After completion/failure | When processing ended (UTC)             |
-| `output_url`    | string   | On `completed`       | URL to download the generated video         |
+| `output_url`    | string   | On `finished`        | Signed URL to the generated video, valid for one hour |
 | `error_message` | string   | On `failed`          | Description of what went wrong              |

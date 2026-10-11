@@ -1,98 +1,116 @@
 ---
 title: Introduction
-description: CHAMELAION API documentation for AI-powered lip sync, video dubbing, content localization, and personalized video at scale.
+description: CHAMELAION API documentation for AI lip sync and end-to-end video translation, covering dubbing, speaker voices, subtitles, and content localization at scale.
 ---
 
 import { Callout, Accordion } from "@stainless-api/docs/components";
 
-Our lip sync API takes any video and audio input and generates perfectly matched lip movements. Send a video of someone speaking English and an audio track in Japanese. CHAMELAION produces a new video where the speaker's lips move naturally to match the Japanese audio. This powers video dubbing, content localization, personalized video messaging, and more.
+CHAMELAION offers two asynchronous APIs for localizing video:
+
+- **Lip Sync** takes a video and a new audio track and regenerates the speaker's lip movements to match it. Send a video of someone speaking English with an audio track in Japanese, and CHAMELAION returns a video where the speaker's lips move naturally to the Japanese audio.
+- **Video Translate** takes a single video and returns it translated into up to 10 languages per request. It transcribes and translates the speech, voices each speaker, keeps the background audio, and lip-syncs the result. Each target language produces a video, an audio track, and an SRT subtitle file.
 
 ## At a glance
 
-|                            |                                                                  |
-| :------------------------- | :--------------------------------------------------------------- |
-| **Base URL**               | `https://api.chamelaion.com/api`                                 |
-| **Authentication**         | Bearer token or `x-api-key` header                               |
-| **Input formats**          | MP4 video and WAV/MP3 audio, via URL or direct upload            |
-| **Max concurrent jobs**    | Depends on plan                                                  |
-| **Rate limit**             | 60 requests/min on generation endpoints                          |
-| **SDKs**                   | Python 3.8+ and TypeScript/Node.js 18+                           |
-| **Active speaker detection** | Automatic (can be disabled per request)                        |
+|                              |                                                                         |
+| :--------------------------- | :---------------------------------------------------------------------- |
+| **Base URL**                 | `https://api.chamelaion.com/api`                                        |
+| **Authentication**           | Bearer token or `x-api-key` header                                      |
+| **Lip Sync input**           | Video and audio (e.g. MP4, WAV, MP3), via URL or direct upload          |
+| **Video Translate input**    | One video via URL or direct upload (max 2 GiB), with optional SRT files |
+| **Video Translate languages** | 50+ [supported languages](/guides/video-translate#supported-languages) |
+| **Max concurrent jobs**      | Lip Sync: depends on plan. Video Translate: limited per account         |
+| **Rate limits**              | Per API token: 10 generation requests and 100 read requests per 10 s    |
+| **SDKs**                     | Python 3.9+, TypeScript/Node.js 20+, and Go 1.22+                       |
+| **Active speaker detection** | Automatic for Lip Sync (can be disabled per request)                    |
+| **Webhooks**                 | Completion webhooks for Video Translate                                 |
 
 ## Key capabilities
 
 - **AI Lip Sync:** State-of-the-art lip sync model that preserves the speaker's identity, speaking style, and expressions while matching lip movements to new audio.
-- **URL-based generation:** Pass publicly accessible URLs for your video and audio. No file uploads required.
-- **Direct media upload:** Upload video and audio files directly via multipart form-data when URLs are not available.
-- **Active speaker detection:** Automatically detects and syncs the active speaker in multi-person scenes. Can be disabled for single-speaker videos.
-- **Request tracking:** Every generation returns a `request_id`. Poll for status, retrieve results, or filter by your own `reference_id`.
-- **Pagination:** List and paginate through your generation history with `limit` and `offset` parameters.
+- **Video Translate:** Translate one video into up to 10 languages per request, with background audio and lip sync enabled by default.
+- **Custom subtitles and voices:** Supply your own source or translated SRT files and assign a voice to each speaker.
+- **URL-based or direct upload:** Pass publicly accessible media URLs, or upload files via multipart form-data.
+- **Active speaker detection (Lip Sync):** Automatically detects and syncs the active speaker in multi-person scenes.
+- **Request tracking:** Every job returns a `request_id`. Poll for status, receive a webhook, or look up requests by your own `reference_id`.
+- **Pagination and filters:** List your request history with `limit` and `offset`. Filter by `reference_id`, and for Video Translate also by status, language, or creation time.
 
-## What can I use AI LipSync for?
+## What can I use CHAMELAION for?
 
-AI lip sync fits anywhere you need lip movements to match new audio:
+CHAMELAION fits anywhere a video needs to speak a new language or a new script:
 
-- **Video translation / dubbing:** Translate videos into multiple languages with natural, lip-synced results.
-- **AI Avatars:** Make content always feel authentic. Enable avatars to speak with realistic, lip-synced articulation.
-- **UGC & Creative Ads:** Adapt and scale UGC and ad creative videos by changing messaging inside existing videos - without re-recording.
-- **Dialogue Replacement & Personalization:** Replace words or full lines in finished videos without re-shooting.
+- **Video translation and dubbing:** Translate videos into multiple languages with natural voices and lip-synced results in one API call.
+- **AI avatars:** Make avatars speak with realistic, lip-synced articulation.
+- **UGC and creative ads:** Adapt and scale UGC and ad creatives by changing the message inside existing videos, without re-recording.
+- **Dialogue replacement and personalization:** Replace words or full lines in finished videos without re-shooting.
 
 ## How do I get started?
 
-Get from zero to your first AI lip sync generation in three steps:
+Get from zero to your first result in three steps:
 
 1. **Get your API key:** Create one from the [Dashboard](https://app.chamelaion.com/settings).
 2. **Authenticate:** Pass your key as a Bearer token or `x-api-key` header. See the [Authentication guide](/guides/authentication).
-3. **Generate your first lip sync:** Follow the [Quickstart](/guides/quickstart) to generate a synced video in minutes.
+3. **Start a job:** Follow the [Quickstart](/guides/quickstart) to generate a lip sync, or the [Video Translate guide](/guides/video-translate) to translate a video.
 
 <Callout variant="info">
-  CHAMELAION processes generation requests asynchronously. After submitting a job, you'll receive a `request_id` that you can use to [poll for the result](/guides/polling-status).
+  All generation requests are asynchronous. Each one returns a `request_id`
+  that you use to [poll for the result](/guides/polling-status). Video Translate
+  can also notify you with a [webhook](/guides/video-translate#receive-completion-webhooks).
 </Callout>
 
 ## API endpoints overview
 
-CHAMELAION exposes a focused set of endpoints:
-
-| Endpoint                          | Method | Description                                      |
-| :-------------------------------- | :----- | :----------------------------------------------- |
-| `/v1/lipsync/generate`            | POST   | Start a lip sync job from video and audio URLs   |
-| `/v1/lipsync/generate-with-media` | POST   | Start a lip sync job from uploaded files          |
-| `/v1/lipsync/requests/{id}`       | GET    | Get the status and result of a specific request  |
-| `/v1/lipsync/requests`            | GET    | List all your lip sync requests with pagination  |
-| `/v1/users/me`                    | GET    | Verify your API token identity                   |
-| `/health`                         | GET    | Service health check (no auth required)          |
+| Endpoint                                  | Method | Description                                             |
+| :---------------------------------------- | :----- | :------------------------------------------------------ |
+| `/v1/lipsync/generate`                    | POST   | Start a lip sync job from video and audio URLs          |
+| `/v1/lipsync/generate-with-media`         | POST   | Start a lip sync job from uploaded files                |
+| `/v1/lipsync/requests/{id}`               | GET    | Get the status and result of a lip sync request         |
+| `/v1/lipsync/requests`                    | GET    | List your lip sync requests                             |
+| `/v1/video-translate/generate`            | POST   | Start a video translation from a video URL              |
+| `/v1/video-translate/generate-with-media` | POST   | Start a video translation from an uploaded video        |
+| `/v1/video-translate/requests/{id}`       | GET    | Get the status and outputs of a video translation       |
+| `/v1/video-translate/requests`            | GET    | List your video translations with filters               |
+| `/v1/video-translate/voices`              | GET    | List voices you can assign to speakers                  |
+| `/v1/users/me`                            | GET    | Verify your API token identity                          |
+| `/health`                                 | GET    | Service health check (no auth required)                 |
 
 ## Frequently asked questions
 
 <Accordion.Group>
   <Accordion>
-    <Accordion.Summary>What video and audio formats does CHAMELAION support?</Accordion.Summary>
+    <Accordion.Summary>What media formats does CHAMELAION support?</Accordion.Summary>
 
-    CHAMELAION accepts common video formats like **MP4** for video input and **WAV** or **MP3** for audio input. You can provide media via publicly accessible URLs or upload files directly through the multipart form-data endpoint.
+    Lip Sync accepts common video and audio formats such as **MP4**, **WAV**, and **MP3**. Video Translate accepts a single video file up to **2 GiB**, plus optional **SRT** subtitles. Provide media through publicly accessible URLs or upload files directly with multipart form-data.
 
   </Accordion>
   <Accordion>
-    <Accordion.Summary>How long does a generation take?</Accordion.Summary>
+    <Accordion.Summary>How long does a job take?</Accordion.Summary>
 
-    Generation time depends on video length and current queue depth. Most videos under 60 seconds complete within 1–3 minutes. You can poll the status of your request using the [request status endpoint](/guides/polling-status).
+    Lip sync time depends on video length and queue depth. Most videos under 60 seconds complete within 1–3 minutes. Video translations take longer because the video is transcribed, then translated, voiced, and lip-synced for each target language. [Poll the request](/guides/polling-status) or use a [webhook](/guides/video-translate#receive-completion-webhooks) to know when it finishes.
+
+  </Accordion>
+  <Accordion>
+    <Accordion.Summary>Which languages does Video Translate support?</Accordion.Summary>
+
+    Video Translate supports more than 50 language codes, including English, Spanish, German, French, Japanese, Chinese, Arabic, and Hindi. See the full list of [supported languages](/guides/video-translate#supported-languages). The source language is detected automatically when you omit `source_language`.
 
   </Accordion>
   <Accordion>
     <Accordion.Summary>Can CHAMELAION handle multi-person videos?</Accordion.Summary>
 
-    Yes. CHAMELAION includes **active speaker detection** that automatically identifies and syncs the speaking person in multi-face videos. For single-speaker videos, you can disable this feature by setting `disable_active_speaker_detection: true` for faster processing.
+    Yes. Lip Sync includes **active speaker detection**, which identifies and syncs the person who is speaking. For single-speaker videos, set `disable_active_speaker_detection: true` for faster processing. Video Translate detects speakers automatically; to choose a voice per speaker, supply a `source_srt` with `Speaker N:` labels and [map them to voices](/guides/video-translate#assign-voices-to-speakers).
 
   </Accordion>
   <Accordion>
     <Accordion.Summary>How does authentication work?</Accordion.Summary>
 
-    CHAMELAION supports two authentication methods: a **Bearer token** in the `Authorization` header or an **API key** in the `x-api-key` header. Both use the same API token from your dashboard. See the [Authentication guide](/guides/authentication) for details.
+    Send your API token as a **Bearer token** in the `Authorization` header or in the `x-api-key` header. Both methods work for every endpoint. See the [Authentication guide](/guides/authentication) for details.
 
   </Accordion>
   <Accordion>
-    <Accordion.Summary>What happens if my generation fails?</Accordion.Summary>
+    <Accordion.Summary>What happens if my job fails?</Accordion.Summary>
 
-    When a generation fails, the request status will show `failed` with an `error_message` field explaining what went wrong. Common causes include inaccessible URLs, unsupported formats, or quota limits. See the [Error Handling guide](/guides/error-handling) for troubleshooting.
+    Invalid input, such as an inaccessible URL or an unsupported format, is rejected immediately with a `400` error. If a job fails during processing, its status becomes `failed` and `error_message` explains what went wrong. See the [Error Handling guide](/guides/error-handling) for troubleshooting.
 
   </Accordion>
 </Accordion.Group>
