@@ -341,7 +341,7 @@ paths:
                   "1": AZnzlk1XvdvUeBnXmlld
               inputs:
                 - type: video
-                  url: https://example.com/input.mp4
+                  url: https://storage.googleapis.com/chamelaion-test-media/video.mp4
       responses:
         "200":
           $ref: "#/components/responses/VideoTranslateAccepted"

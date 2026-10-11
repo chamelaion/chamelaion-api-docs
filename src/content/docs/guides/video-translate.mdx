@@ -26,7 +26,7 @@ curl --request POST \
     "inputs": [
       {
         "type": "video",
-        "url": "https://example.com/source-video.mp4"
+        "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
       }
     ]
   }'
@@ -299,7 +299,7 @@ const client = new Chamelaion(); // reads CHAMELAION_API_KEY
 const job = await client.videoTranslate.generate({
   source_language: "en",
   target_languages: ["de"],
-  inputs: [{ type: "video", url: "https://example.com/source-video.mp4" }],
+  inputs: [{ type: "video", url: "https://storage.googleapis.com/chamelaion-test-media/video.mp4" }],
 });
 
 const result = await client.videoTranslate.requests.retrieve(job.request_id);
@@ -315,7 +315,7 @@ client = Chamelaion()  # reads CHAMELAION_API_KEY
 job = client.video_translate.generate(
     source_language="en",
     target_languages=["de"],
-    inputs=[{"type": "video", "url": "https://example.com/source-video.mp4"}],
+    inputs=[{"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"}],
 )
 
 result = client.video_translate.requests.retrieve(job.request_id)
@@ -331,7 +331,7 @@ job, err := client.VideoTranslate.Generate(ctx, chamelaion.VideoTranslateGenerat
 	SourceLanguage:  chamelaion.String("en"),
 	TargetLanguages: []string{"de"},
 	Inputs: []chamelaion.VideoTranslateGenerateParamsInput{
-		{Type: "video", URL: "https://example.com/source-video.mp4"},
+		{Type: "video", URL: "https://storage.googleapis.com/chamelaion-test-media/video.mp4"},
 	},
 })
 if err != nil {
