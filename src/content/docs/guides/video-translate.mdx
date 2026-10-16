@@ -46,16 +46,19 @@ The URL must be reachable by CHAMELAION. Signed URLs work as long as they stay v
 | `disable_background_audio` | boolean | No       | Set to `true` to drop the original background audio (default: `false`)                       |
 | `disable_lip_sync`         | boolean | No       | Set to `true` to skip lip sync and only replace the audio (default: `false`)                  |
 | `formality`                | boolean | No       | Set to `true` for a formal tone in translations, `false` for a casual tone (default: `false`) |
-| `config`                   | object  | No       | Optional [speech model](#choose-a-speech-model), [subtitles](#supply-srt-files), and [speaker voices](#assign-voices-to-speakers) |
+| `model`                    | string  | No       | `expressive` (default) or `classic`; see [Choose a speech model](#choose-a-speech-model)        |
+| `config`                   | object  | No       | Optional [subtitles](#supply-srt-files), [speaker voices](#assign-voices-to-speakers), and advanced settings |
 
 ## Choose a speech model
 
-Set `config.tts_model` to choose the speech model. When you omit it, CHAMELAION uses `eleven_v4`.
+Set the top-level `model` field to choose the speech model. When you omit it, CHAMELAION uses `expressive`.
 
 | Value | Product name | Target-language support |
 | :---- | :----------- | :---------------------- |
-| `eleven_v4` | CHAMELAION Expressive | All 91 target languages; default |
-| `eleven_multilingual_v2` | CHAMELAION Classic | The legacy 29-language set |
+| `expressive` | CHAMELAION Expressive | All 91 canonical target languages; default |
+| `classic` | CHAMELAION Classic | The legacy 29 canonical target languages |
+
+The product UI may show 93 Expressive and 31 Classic languages because it also counts accepted regional aliases. Existing integrations may continue to send `config.tts_model` (`eleven_v4` or `eleven_multilingual_v2`), but that field is deprecated. If both fields are sent, they must select the same model.
 
 This example selects Classic, translates to English, and disables both background audio and lip sync:
 
@@ -69,7 +72,7 @@ curl --request POST \
     "target_languages": ["en"],
     "disable_background_audio": true,
     "disable_lip_sync": true,
-    "config": { "tts_model": "eleven_multilingual_v2" },
+    "model": "classic",
     "inputs": [{
       "type": "video",
       "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
@@ -89,7 +92,7 @@ curl --request POST \
     "target_languages": ["kn"],
     "disable_background_audio": false,
     "disable_lip_sync": false,
-    "config": { "tts_model": "eleven_v4" },
+    "model": "expressive",
     "inputs": [{
       "type": "video",
       "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
@@ -113,6 +116,7 @@ curl --request POST \
   --header "Authorization: Bearer $CHAMELAION_API_KEY" \
   --form "video=@/absolute/path/source-video.mp4;type=video/mp4" \
   --form 'target_languages=["de","fr"]' \
+  --form 'model=expressive' \
   --form "source_language=en" \
   --form "reference_id=translation-upload-001" \
   --form "webhook_url=https://example.com/webhooks/chamelaion"
@@ -341,7 +345,7 @@ const client = new Chamelaion(); // reads CHAMELAION_API_KEY
 const job = await client.videoTranslate.generate({
   source_language: "en",
   target_languages: ["kn"],
-  config: { tts_model: "eleven_v4" },
+  model: "expressive",
   inputs: [{ type: "video", url: "https://storage.googleapis.com/chamelaion-test-media/video.mp4" }],
 });
 
@@ -358,7 +362,7 @@ client = Chamelaion()  # reads CHAMELAION_API_KEY
 job = client.video_translate.generate(
     source_language="en",
     target_languages=["kn"],
-    config={"tts_model": "eleven_v4"},
+    model="expressive",
     inputs=[{"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"}],
 )
 
@@ -374,7 +378,7 @@ client := chamelaion.NewClient() // reads CHAMELAION_API_KEY
 job, err := client.VideoTranslate.Generate(ctx, chamelaion.VideoTranslateGenerateParams{
 	SourceLanguage:  chamelaion.String("en"),
 	TargetLanguages: []string{"kn"},
-	Config:          map[string]any{"tts_model": "eleven_v4"},
+	Model:            chamelaion.VideoTranslateModelExpressive,
 	Inputs: []chamelaion.VideoTranslateGenerateParamsInput{
 		{Type: "video", URL: "https://storage.googleapis.com/chamelaion-test-media/video.mp4"},
 	},
@@ -390,4 +394,4 @@ if err != nil {
 fmt.Println(result.Status)
 ```
 
-The SDKs support Video Translate starting with `v1.1.0`; typed `tts_model` selection is available in `v1.2.0`. See the [Video Translate API reference](/api/resources/video_translate) for complete request and response schemas and SDK methods.
+The SDKs support Video Translate starting with `v1.1.0`; the product-facing `model` field is available in `v2.0.0`. See the [Video Translate API reference](/api/resources/video_translate) for complete request and response schemas and SDK methods.

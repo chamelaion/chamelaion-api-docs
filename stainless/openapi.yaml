@@ -329,6 +329,7 @@ paths:
               disable_background_audio: false
               disable_lip_sync: false
               formality: false
+              model: expressive
               config:
                 source_srt:
                   file_name: interview.srt
@@ -1107,6 +1108,11 @@ components:
         formality:
           type: boolean
           default: false
+        model:
+          type: string
+          enum: [expressive, classic]
+          default: expressive
+          description: Product speech model. `expressive` maps to Eleven v4 and is the default; `classic` maps to Eleven Multilingual v2.
         config:
           $ref: "#/components/schemas/VideoTranslateConfig"
         inputs:
@@ -1133,12 +1139,11 @@ components:
           type: string
           enum: [eleven_v4, eleven_multilingual_v2]
           default: eleven_v4
+          deprecated: true
           description: |
-            Text-to-speech model. `eleven_v4` is CHAMELAION Expressive and is used when
-            this field is omitted. `eleven_multilingual_v2` is CHAMELAION Classic and
-            supports a smaller target-language set. The model and its target languages
-            are validated before the translation starts. Source-language support is
-            independent of the speech model.
+            Deprecated compatibility field. Prefer top-level `model`. `eleven_v4` equals
+            `expressive`; `eleven_multilingual_v2` equals `classic`. If both fields are sent
+            they must agree.
         source_srt:
           $ref: "#/components/schemas/VideoTranslateSRTInput"
         target_srts:
@@ -1236,6 +1241,11 @@ components:
         formality:
           type: boolean
           default: false
+        model:
+          type: string
+          enum: [expressive, classic]
+          default: expressive
+          description: Product speech model. `expressive` maps to Eleven v4 and is the default; `classic` maps to Eleven Multilingual v2.
         config:
           type: string
           maxLength: 6291456
@@ -1333,6 +1343,7 @@ components:
         - disable_background_audio
         - disable_lip_sync
         - formality
+        - model
         - config
         - status
         - created_at
@@ -1361,6 +1372,10 @@ components:
           description: Whether lip sync was disabled for this request.
         formality:
           type: boolean
+        model:
+          type: string
+          enum: [expressive, classic]
+          description: Product speech model selected for the request.
         config:
           $ref: "#/components/schemas/VideoTranslatePublicConfig"
         status:
