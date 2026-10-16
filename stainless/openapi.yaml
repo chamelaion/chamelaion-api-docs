@@ -99,9 +99,9 @@ paths:
                   disable_active_speaker_detection: false
                   inputs:
                     - type: video
-                      url: https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4
+                      url: https://storage.googleapis.com/chamelaion-test-media/video.mp4
                     - type: audio
-                      url: https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav
+                      url: https://storage.googleapis.com/chamelaion-test-media/audio.wav
               max_face_mode:
                 value:
                   reference_id: without-asd-demo

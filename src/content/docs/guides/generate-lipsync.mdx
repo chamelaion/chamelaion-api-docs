@@ -26,11 +26,11 @@ Use `POST /v1/lipsync/generate` when your video and audio are hosted at publicly
   "inputs": [
     {
       "type": "video",
-      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
     },
     {
       "type": "audio",
-      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/audio.wav"
     }
   ]
 }
@@ -55,8 +55,8 @@ curl -X POST https://api.chamelaion.com/api/v1/lipsync/generate \
   -d '{
     "reference_id": "normal-lipsync-demo",
     "inputs": [
-      {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"},
-      {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"}
+      {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"},
+      {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/audio.wav"}
     ]
   }'
 ```
@@ -76,8 +76,8 @@ response = requests.post(
     json={
         "reference_id": "normal-lipsync-demo",
         "inputs": [
-            {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"},
-            {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"},
+            {"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"},
+            {"type": "audio", "url": "https://storage.googleapis.com/chamelaion-test-media/audio.wav"},
         ],
     },
 )
@@ -102,11 +102,11 @@ const response = await fetch(
       inputs: [
         {
           type: "video",
-          url: "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4",
+          url: "https://storage.googleapis.com/chamelaion-test-media/video.mp4",
         },
         {
           type: "audio",
-          url: "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav",
+          url: "https://storage.googleapis.com/chamelaion-test-media/audio.wav",
         },
       ],
     }),
@@ -228,11 +228,11 @@ Omit `disable_active_speaker_detection` or set it to `false` to use ASD. This ex
   "inputs": [
     {
       "type": "video",
-      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
     },
     {
       "type": "audio",
-      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/audio.wav"
     }
   ]
 }
@@ -280,11 +280,11 @@ Keep reference IDs unique: retrieving a single request by a `reference_id` that 
   "inputs": [
     {
       "type": "video",
-      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.mp4"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
     },
     {
       "type": "audio",
-      "url": "https://storage.googleapis.com/chamelaion-test-media/Example_Active_Speaker_Detection.wav"
+      "url": "https://storage.googleapis.com/chamelaion-test-media/audio.wav"
     }
   ]
 }
