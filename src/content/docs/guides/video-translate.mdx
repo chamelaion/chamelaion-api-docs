@@ -46,7 +46,62 @@ The URL must be reachable by CHAMELAION. Signed URLs work as long as they stay v
 | `disable_background_audio` | boolean | No       | Set to `true` to drop the original background audio (default: `false`)                       |
 | `disable_lip_sync`         | boolean | No       | Set to `true` to skip lip sync and only replace the audio (default: `false`)                  |
 | `formality`                | boolean | No       | Set to `true` for a formal tone in translations, `false` for a casual tone (default: `false`) |
-| `config`                   | object  | No       | Optional [subtitles](#supply-srt-files) and [speaker voices](#assign-voices-to-speakers)      |
+| `config`                   | object  | No       | Optional [speech model](#choose-a-speech-model), [subtitles](#supply-srt-files), and [speaker voices](#assign-voices-to-speakers) |
+
+## Choose a speech model
+
+Set `config.tts_model` to choose the speech model. When you omit it, CHAMELAION uses `eleven_v4`.
+
+| Value | Product name | Target-language support |
+| :---- | :----------- | :---------------------- |
+| `eleven_v4` | CHAMELAION Expressive | All 91 target languages; default |
+| `eleven_multilingual_v2` | CHAMELAION Classic | The legacy 29-language set |
+
+This example selects Classic, translates to English, and disables both background audio and lip sync:
+
+```bash
+curl --request POST \
+  https://api.chamelaion.com/api/v1/video-translate/generate \
+  --header "Authorization: Bearer $CHAMELAION_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "source_language": "de",
+    "target_languages": ["en"],
+    "disable_background_audio": true,
+    "disable_lip_sync": true,
+    "config": { "tts_model": "eleven_multilingual_v2" },
+    "inputs": [{
+      "type": "video",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
+    }]
+  }'
+```
+
+This example selects Expressive and translates to Kannada with background audio and lip sync enabled:
+
+```bash
+curl --request POST \
+  https://api.chamelaion.com/api/v1/video-translate/generate \
+  --header "Authorization: Bearer $CHAMELAION_API_KEY" \
+  --header "Content-Type: application/json" \
+  --data '{
+    "source_language": "en",
+    "target_languages": ["kn"],
+    "disable_background_audio": false,
+    "disable_lip_sync": false,
+    "config": { "tts_model": "eleven_v4" },
+    "inputs": [{
+      "type": "video",
+      "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"
+    }]
+  }'
+```
+
+<Callout variant="note">
+  The model and every target language are validated before a job is created. An
+  unsupported model value or a target language unavailable for that model returns
+  a `400` response.
+</Callout>
 
 ## Upload a video directly
 
@@ -262,28 +317,15 @@ Return a 2xx response quickly and process the event asynchronously. Delivery is 
 
 ## Supported languages
 
-Use these codes for `source_language`, `target_languages`, and SRT languages.
+Source and target support differ. Use canonical lowercase codes; regional English and Portuguese codes are normalized where supported.
 
-| Code    | Language           | Code | Language         | Code | Language   |
-| :------ | :----------------- | :--- | :--------------- | :--- | :--------- |
-| `ar`    | Arabic             | `fr` | French           | `ne` | Nepali     |
-| `be`    | Belarusian         | `gl` | Galician         | `nl` | Dutch      |
-| `bg`    | Bulgarian          | `gu` | Gujarati         | `no` | Norwegian  |
-| `bn`    | Bengali            | `hi` | Hindi            | `or` | Odia       |
-| `bs`    | Bosnian            | `hu` | Hungarian        | `pl` | Polish     |
-| `ca`    | Catalan            | `id` | Indonesian       | `pt` | Portuguese |
-| `cs`    | Czech              | `it` | Italian          | `ro` | Romanian   |
-| `da`    | Danish             | `ja` | Japanese         | `ru` | Russian    |
-| `de`    | German             | `kk` | Kazakh           | `sk` | Slovak     |
-| `el`    | Greek              | `kn` | Kannada          | `sl` | Slovenian  |
-| `en`    | English            | `ko` | Korean           | `sr` | Serbian    |
-| `en-gb` | English (British)  | `lt` | Lithuanian       | `sv` | Swedish    |
-| `en-us` | English (American) | `lv` | Latvian          | `ta` | Tamil      |
-| `es`    | Spanish            | `mk` | Macedonian       | `te` | Telugu     |
-| `et`    | Estonian           | `ml` | Malayalam        | `tr` | Turkish    |
-| `fa`    | Persian            | `mr` | Marathi          | `uk` | Ukrainian  |
-| `fi`    | Finnish            | `ms` | Malay            | `vi` | Vietnamese |
-| `fil`   | Filipino           | `nb` | Norwegian Bokmål | `zh` | Chinese    |
+**Source languages (84):** `af`, `am`, `ar`, `as`, `az`, `be`, `bg`, `bn`, `bs`, `ca`, `cs`, `cy`, `da`, `de`, `el`, `en`, `es`, `et`, `fa`, `fi`, `fil`, `fr`, `gl`, `gu`, `ha`, `he`, `hi`, `hr`, `hu`, `hy`, `id`, `is`, `it`, `ja`, `jv`, `ka`, `kk`, `km`, `kn`, `ko`, `lb`, `ln`, `lo`, `lt`, `lv`, `mi`, `mk`, `ml`, `mn`, `mr`, `ms`, `mt`, `my`, `ne`, `nl`, `no`, `oc`, `or`, `pa`, `pl`, `ps`, `pt`, `ro`, `ru`, `sd`, `si`, `sk`, `sl`, `sn`, `so`, `sr`, `sv`, `sw`, `ta`, `te`, `tg`, `th`, `tr`, `uk`, `ur`, `uz`, `vi`, `yo`, `zh`.
+
+**Expressive target languages (91):** `af`, `am`, `ar`, `as`, `az`, `be`, `bg`, `bn`, `bs`, `ca`, `ceb`, `ckb`, `cs`, `cy`, `da`, `de`, `el`, `en`, `es`, `et`, `fa`, `ff`, `fi`, `fil`, `fr`, `ga`, `gl`, `gu`, `ha`, `he`, `hi`, `hr`, `hu`, `hy`, `id`, `is`, `it`, `ja`, `jv`, `ka`, `kk`, `kn`, `ko`, `ky`, `lb`, `lg`, `ln`, `lo`, `lt`, `lv`, `mi`, `mk`, `ml`, `mn`, `mr`, `ms`, `mt`, `my`, `ne`, `nl`, `no`, `ny`, `oc`, `or`, `pa`, `pl`, `ps`, `pt`, `ro`, `ru`, `sd`, `sk`, `sl`, `sn`, `so`, `sr`, `sv`, `sw`, `ta`, `te`, `tg`, `th`, `tr`, `uk`, `ur`, `uz`, `vi`, `yo`, `yue`, `zh`, `zu`.
+
+**Classic target languages (29):** `ar`, `bg`, `zh`, `hr`, `cs`, `da`, `nl`, `en`, `fi`, `fr`, `de`, `el`, `hi`, `id`, `it`, `ja`, `ko`, `ms`, `fil`, `pl`, `pt`, `ro`, `ru`, `sk`, `es`, `sv`, `ta`, `tr`, `uk`.
+
+The aliases `en-gb`, `en-us`, `pt-br`, `pt-pt`, and `tl` are accepted and normalized to their base language. `jw` is accepted as a legacy alias for `jv`.
 
 ## SDK examples
 
@@ -298,7 +340,8 @@ const client = new Chamelaion(); // reads CHAMELAION_API_KEY
 
 const job = await client.videoTranslate.generate({
   source_language: "en",
-  target_languages: ["de"],
+  target_languages: ["kn"],
+  config: { tts_model: "eleven_v4" },
   inputs: [{ type: "video", url: "https://storage.googleapis.com/chamelaion-test-media/video.mp4" }],
 });
 
@@ -314,7 +357,8 @@ client = Chamelaion()  # reads CHAMELAION_API_KEY
 
 job = client.video_translate.generate(
     source_language="en",
-    target_languages=["de"],
+    target_languages=["kn"],
+    config={"tts_model": "eleven_v4"},
     inputs=[{"type": "video", "url": "https://storage.googleapis.com/chamelaion-test-media/video.mp4"}],
 )
 
@@ -329,7 +373,8 @@ client := chamelaion.NewClient() // reads CHAMELAION_API_KEY
 
 job, err := client.VideoTranslate.Generate(ctx, chamelaion.VideoTranslateGenerateParams{
 	SourceLanguage:  chamelaion.String("en"),
-	TargetLanguages: []string{"de"},
+	TargetLanguages: []string{"kn"},
+	Config:          map[string]any{"tts_model": "eleven_v4"},
 	Inputs: []chamelaion.VideoTranslateGenerateParamsInput{
 		{Type: "video", URL: "https://storage.googleapis.com/chamelaion-test-media/video.mp4"},
 	},
@@ -345,4 +390,4 @@ if err != nil {
 fmt.Println(result.Status)
 ```
 
-See the [Video Translate API reference](/api/resources/video_translate) for complete request and response schemas and SDK methods.
+The SDKs support Video Translate starting with `v1.1.0`; typed `tts_model` selection is available in `v1.2.0`. See the [Video Translate API reference](/api/resources/video_translate) for complete request and response schemas and SDK methods.

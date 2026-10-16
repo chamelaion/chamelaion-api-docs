@@ -18,7 +18,7 @@ CHAMELAION offers two asynchronous APIs for localizing video:
 | **Authentication**           | Bearer token or `x-api-key` header                                      |
 | **Lip Sync input**           | Video and audio (e.g. MP4, WAV, MP3), via URL or direct upload          |
 | **Video Translate input**    | One video via URL or direct upload (max 2 GiB), with optional SRT files |
-| **Video Translate languages** | 50+ [supported languages](/guides/video-translate#supported-languages) |
+| **Video Translate languages** | 84 source and 91 target [languages](/guides/video-translate#supported-languages) |
 | **Max concurrent jobs**      | Lip Sync: depends on plan. Video Translate: limited per account         |
 | **Rate limits**              | Per API token: 10 generation requests and 100 read requests per 10 s    |
 | **SDKs**                     | Python 3.9+, TypeScript/Node.js 20+, and Go 1.22+                       |
@@ -92,7 +92,7 @@ Get from zero to your first result in three steps:
   <Accordion>
     <Accordion.Summary>Which languages does Video Translate support?</Accordion.Summary>
 
-    Video Translate supports more than 50 language codes, including English, Spanish, German, French, Japanese, Chinese, Arabic, and Hindi. See the full list of [supported languages](/guides/video-translate#supported-languages). The source language is detected automatically when you omit `source_language`.
+    Video Translate supports 84 source languages and 91 target languages with the default Expressive speech model. The Classic model supports a smaller legacy target set. See the complete [language and model support](/guides/video-translate#supported-languages). The source language is detected automatically when you omit `source_language`.
 
   </Accordion>
   <Accordion>

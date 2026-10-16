@@ -1121,14 +1121,24 @@ components:
       type: object
       default: {}
       description: |
-        Request config. `source_srt`, `target_srts` and `speaker_voices` are validated and
-        consumed by the translation; every other key is stored as sent (at most 64 KiB in
+        Request config. `tts_model`, `source_srt`, `target_srts` and `speaker_voices` are
+        validated and consumed by the translation; every other key is stored as sent (at most 64 KiB in
         total, no NUL characters) and returned in responses. Duplicate keys at any depth are
         rejected. Numbers are stored exactly, but responses decode them as IEEE-754
         doubles, so integers beyond 2^53 may lose precision when read back.
         Without SRTs and voices, translation behaves exactly as before (transcription and
         speaker detection are automatic).
       properties:
+        tts_model:
+          type: string
+          enum: [eleven_v4, eleven_multilingual_v2]
+          default: eleven_v4
+          description: |
+            Text-to-speech model. `eleven_v4` is CHAMELAION Expressive and is used when
+            this field is omitted. `eleven_multilingual_v2` is CHAMELAION Classic and
+            supports a smaller target-language set. The model and its target languages
+            are validated before the translation starts. Source-language support is
+            independent of the speech model.
         source_srt:
           $ref: "#/components/schemas/VideoTranslateSRTInput"
         target_srts:
@@ -1299,6 +1309,10 @@ components:
       type: object
       description: The request config as returned by the API. SRT content is replaced by metadata, `speaker_voices` keys are canonical speaker IDs, and other keys are returned unchanged.
       properties:
+        tts_model:
+          type: string
+          enum: [eleven_v4, eleven_multilingual_v2]
+          description: The explicitly selected text-to-speech model. Omitted when the request used the default.
         source_srt:
           $ref: "#/components/schemas/VideoTranslateSRTMetadata"
         target_srts:
