@@ -24,6 +24,8 @@ targets:
     edition: go.2025-10-10
     package_name: github.com/chamelaion/chamelaion-go
     production_repo: chamelaion/chamelaion-go
+    options:
+      go_module_path_override: github.com/chamelaion/chamelaion-go/v2
     publish:
       go: true
 
@@ -37,7 +39,7 @@ resources:
       check: get /health
   users:
     methods:
-      me: get /v1/users/me
+      retrieve_current: get /v1/users/me
   lipsync:
     methods:
       generate: post /v1/lipsync/generate

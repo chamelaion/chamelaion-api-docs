@@ -7,6 +7,11 @@ import {
 } from "@stainless-api/docs";
 import aiChat from "@stainless-api/docs-ai-chat/plugin";
 
+// The file-system loader has no release info and defaults every SDK to 0.0.1.
+// Bump this when the SDKs (released in lockstep) publish a new version. On a
+// major bump, also update `go_module_path_override` in stainless/stainless.yml.
+const SDK_VERSION = "2.0.0";
+
 const LIPSYNC_METHOD_ORDER = [
   "Generate",
   "Generate With Media",
@@ -134,6 +139,20 @@ export default defineConfig({
           specPath: "./stainless/openapi.yaml",
           configFilePath: "./stainless/stainless.yml",
           languages: ["http", "typescript", "python", "go"],
+          override: {
+            typescript: {
+              version: SDK_VERSION,
+              install: "npm install chamelaion",
+            },
+            python: {
+              version: SDK_VERSION,
+              install: "pip install chamelaion",
+            },
+            go: {
+              version: SDK_VERSION,
+              install: `go get -u 'github.com/chamelaion/chamelaion-go/v${SDK_VERSION.split(".")[0]}@v${SDK_VERSION}'`,
+            },
+          },
         }),
         propertySettings: {
           collapseDescription: false,
